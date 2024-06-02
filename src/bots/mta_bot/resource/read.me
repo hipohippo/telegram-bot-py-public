@@ -1,0 +1,16 @@
+H Line: Like the other two shuttles, 42nd Street in Manhattan and Franklin Avenue in Brooklyn, it is marked with the letter "S" and its route bullet is colored dark gray on route signs, station signs, rolling stock, and the official subway map. The internal designator for this service is H, though the MTA does not show this on any maps,
+
+FS Line: The Franklin Avenue Shuttle[3] is a New York City Subway shuttle service operating in Brooklyn. The shuttle service uses the BMT Franklin Avenue Line exclusively. The north terminus is Franklin Avenue, with a transfer available to the IND Fulton Street Line. The south terminus is Prospect Park, with a transfer available to the BMT Brighton Line. NYCT Rapid Transit Operations refer to it internally as the S or FS.
+
+GS line:
+0 Line
+
+def doc():
+    parse_stop_time(train_feed, {"A27N"})
+    train = train_feed[0]
+    train.keys()  ## "id", "trip_update"
+    train["trip_update"].keys()  # trip, stop_time_update
+    train["trip_update"]["trip"]["route_id"]  ## A,C,E
+    train["trip_update"]["stop_time_update"]  ## list of times
+    train["trip_update"]["stop_time_update"][0]["arrival"]["time"]  ## epoch time
+    train["trip_update"]["stop_time_update"][0]["stop_id"]  ## stop id
