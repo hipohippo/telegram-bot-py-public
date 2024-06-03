@@ -1,7 +1,6 @@
-import pytest
 import nodriver as uc
-import bs4
-from bs4 import BeautifulSoup
+import pytest
+
 from bots.njt_bot.query.bus_and_stop import NJTBusStop
 from bots.njt_bot.query.bus_api import next_bus_job
 from bots.njt_bot.query.path import html_format_path_status_output, get_train_status, PathStation
@@ -19,5 +18,7 @@ class TestNJTBot:
     async def test_browser_and_parser(self):
         browser = await uc.start()
         stop = NJTBusStop.RWNY
-        tab1 = await browser.get(f"https://mybusnow.njtransit.com/bustime/wireless/html/eta.jsp?route=All&id={stop.id}&showAllBusses=on")
+        tab1 = await browser.get(
+            f"https://mybusnow.njtransit.com/bustime/wireless/html/eta.jsp?route=All&id={stop.id}&showAllBusses=on"
+        )
         await next_bus_job(NJTBusStop.RWNY, "NJ", browser)
