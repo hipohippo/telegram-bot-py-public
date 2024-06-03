@@ -49,6 +49,7 @@ class BotBuilder:
         self.bot_config = bot_config
         self.handlers = self.default_handler.copy()
         self.repeating_jobs = self.default_repeating_jobs.copy()
+        self.daily_jobs = []
         self.error_handler = None
         self.onetime_jobs = []
 
@@ -65,6 +66,10 @@ class BotBuilder:
 
     def add_repeating_jobs(self, repeating_jobs: List[Tuple[JobCallback[CCT], dict]]):
         self.repeating_jobs.extend(repeating_jobs)
+        return self
+
+    def add_daily_job(self, daily_jobs: List[Tuple[JobCallback[CCT], dict]]):
+        self.daily_jobs.extend(daily_jobs)
         return self
 
     def build(self):
@@ -91,4 +96,7 @@ class BotBuilder:
 
         for onetime_job in self.onetime_jobs:
             application.job_queue.run_once(onetime_job[0], **onetime_job[1])
+
+        for daily_job in self.daily_jobs:
+            application.job_queue.run_daily(daily_job[0], **daily_job[1])
         return application

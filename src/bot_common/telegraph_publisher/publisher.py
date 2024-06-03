@@ -1,4 +1,3 @@
-import asyncio
 import logging
 import time
 from typing import List
@@ -16,7 +15,7 @@ def publish_single(telegraph_publisher: Telegraph, title: str, author: str, html
             logging.getLogger(__name__).info(f"published to {url}")
             return url
         except:
-            asyncio.sleep(3)
+            time.sleep(3)
             attempt += 1
     raise Exception("failed to publish to telegraph. connection problem")
 

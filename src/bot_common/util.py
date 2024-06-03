@@ -56,7 +56,7 @@ def restricted(func):
 
 
 def format_white_list(white_list_str: Optional[str]) -> Optional[List[int]]:
-    return [int(x.strip()) for x in white_list_str.split(",")] if white_list_str is not None else None
+    return [int(x.strip()) for x in white_list_str.split(",")] if white_list_str else None
 
 
 def slice_list_for_keyboard_layout(x: list, size: int):
