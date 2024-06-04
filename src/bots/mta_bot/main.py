@@ -5,7 +5,6 @@ from telegram.ext import CommandHandler, Application, MessageHandler, filters
 
 from bot_common.bot_config.bot_config_parser import parse_from_ini
 from bot_common.bot_factory import BotBuilder
-from bot_common.common_handler import heart_beat_job
 from bots.mta_bot.bot_handler import next_train_handler, show_stop_id_handler, search_stop_handler
 from bots.mta_bot.mta_bot_config import MTASubwayBotConfig
 
@@ -25,7 +24,6 @@ def build_bot_app(bot_config_dict) -> Application:
                 MessageHandler(filters.Regex("^[rR]$"), next_train_handler),
             ]
         )  # handlers will be applied in the order defined...if accepted by one handler, it will stop processing more rules
-        .add_repeating_jobs([(heart_beat_job, {"first": 5, "interval": 3 * 3600})])
         .build()
     )
     return bot_app
