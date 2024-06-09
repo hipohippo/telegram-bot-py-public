@@ -1,7 +1,7 @@
 import logging
 from configparser import SectionProxy
 from functools import wraps
-from typing import Callable, List, Optional
+from typing import Callable, List, Optional, Tuple
 
 from telegram import Update
 from telegram.ext import ContextTypes
@@ -67,3 +67,9 @@ def slice_list_for_keyboard_layout(x: list, size: int):
     :return: 2-dim list that every element has length equals to size
     """
     return [x[(size * j) : (size * j + size)] for j in range((len(x) - 1) // size + 1)]
+
+
+def parse_command_and_argument(text_message) -> Tuple[str, List[str]]:
+    assert text_message[0] == "/"
+    cmd = text_message.split(" ")
+    return cmd[0], cmd[1:]

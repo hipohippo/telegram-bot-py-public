@@ -2,10 +2,10 @@ from telegram import Update, BotCommand
 from telegram.ext import ContextTypes
 
 from bot_common.util import restricted
-from bots.njt_bot.query.bus_and_stop import NJTBusStop
-from bots.njt_bot.query.bus_api import next_bus_job
-from bots.njt_bot.query.lightrail_alert import get_hblr_alert
-from bots.njt_bot.query.path import html_format_path_status_output, get_train_status, PathStation
+from njtransit.query.bus_and_stop import NJTBusStop
+from njtransit.query.bus_api import next_bus_job
+from njtransit.query.lightrail_alert import get_hblr_alert
+from njtransit.query.path import html_format_path_status_output, get_train_status, PathStation
 
 
 async def init_cmd(context: ContextTypes.DEFAULT_TYPE):

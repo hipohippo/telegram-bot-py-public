@@ -8,7 +8,7 @@ from bot_common.bot_factory import BotBuilder
 from bot_common.common_handler import init_browser_handler
 from bots.njt_bot.bot_handler import next_bus_handler, init_cmd, lightrail_alert_handler, path_handler
 from bots.njt_bot.njt_bot_config import NJTBotConfig
-from bots.njt_bot.query.path import PathStation
+from njtransit.query.path import PathStation
 
 
 def build_bot_app(bot_config_dict) -> Application:

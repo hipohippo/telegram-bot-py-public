@@ -4,9 +4,9 @@ from telegram import Update
 from telegram.ext import ContextTypes
 
 from bots.mta_bot.mta_bot_config import MTASubwayBotConfig
-from bots.mta_bot.query.feed_query import query_stop_and_route, RouteGroup, query_all_stations_for_route
-from bots.mta_bot.query.format import format_html
-from bots.mta_bot.query.util import filter_by_time
+from nyc_mta.query.feed_query import query_stop_and_route, RouteGroup, query_all_stations_for_route
+from nyc_mta.query.format import format_html
+from nyc_mta.query.util import filter_by_time
 
 
 async def next_train_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):

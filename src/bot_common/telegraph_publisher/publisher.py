@@ -4,7 +4,6 @@ from typing import List
 
 from telegraph import Telegraph
 
-
 def publish_single(telegraph_publisher: Telegraph, title: str, author: str, html_content: str) -> str:
     attempt = 1
     MAX_ATTEMPT = 2
@@ -14,7 +13,8 @@ def publish_single(telegraph_publisher: Telegraph, title: str, author: str, html
             url = response["url"]
             logging.getLogger(__name__).info(f"published to {url}")
             return url
-        except:
+        except Exception as e:
+            logging.getLogger(__name__).error(e)
             time.sleep(3)
             attempt += 1
     raise Exception("failed to publish to telegraph. connection problem")
