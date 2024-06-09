@@ -1,11 +1,11 @@
 from configparser import SectionProxy
-from pathlib import Path
 from typing import Union
 
 import pandas as pd
 
 from bot_common.bot_config.bot_config import BotConfig
 from bot_common.util import format_white_list
+from nyc_mta.resource.load_stop_info import load_stop_info
 
 
 class MTASubwayBotConfig(BotConfig):
@@ -19,7 +19,7 @@ class MTASubwayBotConfig(BotConfig):
         self.minute_departure_cap = int(bot_config_dict["minute_departure_cap"])
         self.api_key: str = bot_config_dict["api_key"]
 
-        stop_info_df: pd.DataFrame = pd.read_csv(Path(__file__).parent / "resource/stops.csv")
+        stop_info_df: pd.DataFrame = load_stop_info()
         stop_info_df = stop_info_df[pd.isnull(stop_info_df["parent_station"])][["stop_id", "stop_name"]]
         stop_info_df["route"] = [x[0] for x in stop_info_df["stop_id"]]
         self.stop_info_df = stop_info_df
