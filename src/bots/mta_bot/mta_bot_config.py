@@ -5,7 +5,7 @@ import pandas as pd
 
 from bot_common.bot_config.bot_config import BotConfig
 from bot_common.util import format_white_list
-from nyc_mta.resource.load_stop_info import load_stop_info
+from public_transit.nyc_mta.resource.load_stop_info import load_stop_info
 
 
 class MTASubwayBotConfig(BotConfig):
