@@ -17,13 +17,13 @@ class NeoDBBotConfig(BotConfig):
         self.max_item_per_query = int(bot_config_dict["max_item_per_query"])
         self.neodb_object = NeoDB(self.neodb_api_key)
         self.subkeys = {
-            "book": ["title", "author", "isbn", "subtitle","pub_house", "pub_year"],
-            "movie": ["title", "director", "actor", "pub_house", "pub_year"],
-            "tv": ["title", "director", "actor", "pub_house", "pub_year"],
-            "music": ["title", "artist", "album", "pub_house", "pub_year"],
-            "game": ["title", "developer", "publisher", "pub_house", "pub_year"],
-            "software": ["title", "developer", "publisher", "pub_house", "pub_year"],
-            "other": ["title", "pub_house", "pub_year"],
+            "book": ["title", "author", "isbn", "subtitle","pub_house", "pub_year", "uuid"],
+            "movie": ["title", "director", "actor", "pub_house", "pub_year", "uuid"],
+            "tv": ["title", "director", "actor", "pub_house", "pub_year", "uuid"],
+            "music": ["title", "artist", "album", "pub_house", "pub_year", "uuid"],
+            "game": ["title", "developer", "publisher", "pub_house", "pub_year", "uuid"],
+            "software": ["title", "developer", "publisher", "pub_house", "pub_year", "uuid"],
+            "other": ["title", "pub_house", "pub_year", "uuid"],
         } # TODO: add more subkeys
 
 
