@@ -1,3 +1,7 @@
+import logging
+import tempfile
+import aiohttp
+
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     CommandHandler,
@@ -7,11 +11,41 @@ from telegram.ext import (
     ContextTypes,
     filters,
 )
+from telegram import InputMediaPhoto
+from neodb.item import NeoDBItem
 
-import logging
 
 # Define conversation states
 SEARCH, SELECT_ITEM, CHOOSE_ACTION, ACTION_INPUT = range(4)
+
+
+async def download_image(session: aiohttp.ClientSession, url: str) -> str:
+    async with session.get(url) as response:
+        if response.status == 200:
+            f = tempfile.NamedTemporaryFile(delete=False, suffix=".jpg")
+            f.write(await response.read())
+            f.close()
+            return f.name
+    return ""
+
+
+async def compose_reply_message(item: NeoDBItem) -> InputMediaPhoto:
+    async with aiohttp.ClientSession() as session:
+        # Download the cover image
+        image_path = await download_image(session, item.cover_image_url)
+
+        # Compose the HTML message
+        caption = f"<b>{item.category}</b>\n"
+        caption += f"<b>Title:</b> {item.title}\n"
+        caption += f"<b>By:</b> {item.by}\n"
+        caption += f"<a href='{item.url}'>Link</a>\n"
+
+        # caption += f"<b>Description:</b> {item.description[:280]}\n"
+        # Create InputMediaPhoto object
+        media = InputMediaPhoto(
+            media=open(image_path, "rb"), caption=caption, parse_mode="HTML"
+        )
+        return media
 
 
 async def start_search(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -19,50 +53,38 @@ async def start_search(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
     return SEARCH
 
 
-def format_search_results(
-    results: dict, subkeys: dict, max_item_per_query: int
-) -> dict:
-    return {
-        results["data"][i]["uuid"]: {
-            k: str(results["data"][i].get(k, ""))
-            for k in subkeys[results["data"][i]["category"]]
-        }
-        for i in range(min(max_item_per_query, len(results["data"])))
-    }
-
-
 async def search_items(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     ## TODO: add picture description
-    
+
     context.user_data["current_state"] = SEARCH
     query = update.message.text.lower()
-    search_results = context.bot_data["bot_config"].neodb_object.search_items(query, 1)
+    bot_config = context.bot_data["bot_config"]
+    search_results = bot_config.neodb_object.search_items(query, 1)
     logging.getLogger(__name__).info(f"search_results: {search_results}")
 
     status, results = search_results
+    results = results[: (bot_config.max_item_per_query)]
     if status != 200 or not results:
         await update.message.reply_text("No items found. Please try again.")
         return SEARCH
-    else:
-        sliced_result = format_search_results(
-            results,
-            context.bot_data["bot_config"].subkeys,
-            context.bot_data["bot_config"].max_item_per_query,
-        )
 
     keyboard = [
         [
             InlineKeyboardButton(
-                item["title"] + item.get("author", "_"), callback_data=uuid
+                item.category + "_" + item.title, callback_data=item.uuid
             )
         ]
-        for uuid, item in sliced_result.items()
-    ]
+        for item in results
+    ] + [InlineKeyboardButton("EXIT", callback_data="exit")]
 
-    context.user_data["search_results"] = sliced_result
+    context.user_data["search_results"] = {result.uuid: result for result in results}
+
+    for item in results:
+        item_media_message = await compose_reply_message(item)
+        await update.message.reply_media_group([item_media_message])
+
     reply_markup = InlineKeyboardMarkup(keyboard)
-
-    await update.message.reply_text("Select an item:", reply_markup=reply_markup)
+    await update.message.reply_text("Please Select an item:", reply_markup=reply_markup)
     return SELECT_ITEM
 
 
@@ -70,22 +92,21 @@ async def select_item(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
     context.user_data["current_state"] = SELECT_ITEM
     query = update.callback_query
     await query.answer()
-
+    if query.data == "exit":
+        return ConversationHandler.END
     item_uuid = query.data
-    context.user_data["selected_item"]: dict = context.user_data["search_results"][
-        item_uuid
-    ]
+    context.user_data["selected_item"] = context.user_data["search_results"][item_uuid]
 
     keyboard = [
         [InlineKeyboardButton("Complete", callback_data="complete")],
         [InlineKeyboardButton("Wish", callback_data="wish")],
-    ]
+    ] 
     reply_markup = InlineKeyboardMarkup(keyboard)
 
     await query.edit_message_text(
-        f"Selected: {context.user_data['selected_item']['title']}\nChoose an action:",
+        f"Selected: {context.user_data['selected_item'].title}\nChoose an action:",
         reply_markup=reply_markup,
-    ) 
+    )
     return CHOOSE_ACTION
 
 
@@ -101,7 +122,7 @@ async def handle_action_choice(
 
     if action in ["complete", "wish"]:
         await query.edit_message_text(
-            f"You've chosen to {action} on {context.user_data['selected_item']['title']}. "
+            f"You've chosen to {action} on {context.user_data['selected_item'].title}. "
             "Please enter any additional text:"
         )
         return ACTION_INPUT
@@ -117,11 +138,11 @@ async def perform_action_with_text(
     action_text = update.message.text
     action = context.user_data.get("action")
 
-    item: dict = context.user_data["selected_item"]
+    item: NeoDBItem = context.user_data["selected_item"]
 
     if action == "complete":
         status, response = context.bot_data["bot_config"].neodb_object.mark_complete(
-            item["uuid"], action_text
+            item.uuid, action_text
         )
         if status == 200:
             await update.message.reply_text(
@@ -132,9 +153,9 @@ async def perform_action_with_text(
                 f"Failed to mark as completed: {status}, {response}"
             )
     elif action == "wish":
-        logging.getLogger(__name__).info(f"marking wish for {item['uuid']}")
+        logging.getLogger(__name__).info(f"marking wish for {item.uuid}")
         status, response = context.bot_data["bot_config"].neodb_object.mark_wish(
-            item["uuid"], action_text
+            item.uuid, action_text
         )
         if status == 200:
             await update.message.reply_text(
