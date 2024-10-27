@@ -4,6 +4,7 @@ from typing import List
 
 from telegraph import Telegraph
 
+
 def publish_single(telegraph_publisher: Telegraph, title: str, author: str, html_content: str) -> str:
     attempt = 1
     MAX_ATTEMPT = 2

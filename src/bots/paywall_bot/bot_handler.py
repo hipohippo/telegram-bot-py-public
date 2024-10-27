@@ -61,7 +61,9 @@ async def paywall_handler(update: Update, context: ContextTypes.DEFAULT_TYPE, pa
 ## _deprecated
 async def _translate_handler(update: Update, context: ContextTypes.DEFAULT_TYPE, telegraph_url: str):
     logging.info(f"received request to translate {telegraph_url}")
-    status_message: Message = await update.message.reply_text(text="translating...",)
+    status_message: Message = await update.message.reply_text(
+        text="translating...",
+    )
     bot_config: PaywallBotConfig = context.bot_data["bot_config"]
     page_index = bot_config.deepl_tab_index
     try:

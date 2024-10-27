@@ -15,9 +15,21 @@ def build_bot_app(bot_config_dict: Union[dict, SectionProxy]) -> Application:
     bot_config = BookBotConfig(bot_config_dict)
     bot_app = (
         BotBuilder(bot_config_dict["bot_token"], bot_config)
-        .add_handlers([CommandHandler("recache", recache_handler),])
-        .add_handlers([CommandHandler("allbook", all_book_handler),])
-        .add_handlers([MessageHandler(filters.TEXT, general_handler),])
+        .add_handlers(
+            [
+                CommandHandler("recache", recache_handler),
+            ]
+        )
+        .add_handlers(
+            [
+                CommandHandler("allbook", all_book_handler),
+            ]
+        )
+        .add_handlers(
+            [
+                MessageHandler(filters.TEXT, general_handler),
+            ]
+        )
         .build()
     )
     return bot_app

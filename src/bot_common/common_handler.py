@@ -19,7 +19,8 @@ async def heart_beat_job(context: ContextTypes.DEFAULT_TYPE):
     # bot_config.redis_conn.hmset(bot_config.bot_name, {"last_active": active})
 
     await context.bot.send_message(
-        chat_id=bot_config.heart_beat_chat, text=f"heart beat from {bot_config.bot_name} at {active} UTC",
+        chat_id=bot_config.heart_beat_chat,
+        text=f"heart beat from {bot_config.bot_name} at {active} UTC",
     )
 
 

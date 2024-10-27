@@ -15,7 +15,7 @@ class BookBotConfig(BotConfig):
             white_list_id=format_white_list(bot_config_dict["white_list"]),
             bot_name="Book Finder Bot",
         )
-        self.book_path:Path = Path(bot_config_dict["book_folder_path"])
+        self.book_path: Path = Path(bot_config_dict["book_folder_path"])
         self.recache()
 
     def recache(self):

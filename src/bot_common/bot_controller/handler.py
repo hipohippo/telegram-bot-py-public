@@ -22,7 +22,9 @@ async def start_bot_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.bot_data["exec_pid"].update({bot_name: p.pid})
     await asyncio.sleep(3)
     await update.message.reply_text(
-        reply_to_message_id=update.message.message_id, text=f"BOT: {bot_name} \nPID: {p.pid}", parse_mode="HTML",
+        reply_to_message_id=update.message.message_id,
+        text=f"BOT: {bot_name} \nPID: {p.pid}",
+        parse_mode="HTML",
     )
 
 
@@ -47,11 +49,15 @@ async def stop_bot_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         subprocess.run(["pkill", "-s", str(pid)])
         context.bot_data["exec_pid"].update({bot_name: None})
         await update.message.reply_text(
-            text=f"{bot_name}: {pid} stopped", parse_mode="HTML", reply_to_message_id=update.message.message_id,
+            text=f"{bot_name}: {pid} stopped",
+            parse_mode="HTML",
+            reply_to_message_id=update.message.message_id,
         )
     else:
         await update.message.reply_text(
-            text=f"{bot_name} is NOT running", parse_mode="HTML", reply_to_message_id=update.message.message_id,
+            text=f"{bot_name} is NOT running",
+            parse_mode="HTML",
+            reply_to_message_id=update.message.message_id,
         )
 
 
@@ -69,7 +75,9 @@ async def stop_all_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not messages:
         messages = ["no running bots"]
     await update.message.reply_text(
-        text="\n".join(messages), parse_mode="HTML", reply_to_message_id=update.message.message_id,
+        text="\n".join(messages),
+        parse_mode="HTML",
+        reply_to_message_id=update.message.message_id,
     )
 
 
@@ -88,7 +96,9 @@ async def list_active_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
     if not messages:
         messages = ["no running bots"]
     await update.message.reply_text(
-        text="\n".join(messages), parse_mode="HTML", reply_to_message_id=update.message.message_id,
+        text="\n".join(messages),
+        parse_mode="HTML",
+        reply_to_message_id=update.message.message_id,
     )
 
 
@@ -97,7 +107,9 @@ async def list_all_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     bot_config: BotControllerConfig = context.bot_data["bot_config"]
     messages = sorted(bot_config.exec_script_map.keys())
     await update.message.reply_text(
-        text="\n".join(messages), parse_mode="HTML", reply_to_message_id=update.message.message_id,
+        text="\n".join(messages),
+        parse_mode="HTML",
+        reply_to_message_id=update.message.message_id,
     )
 
 
@@ -117,5 +129,7 @@ async def restart_all_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
         context.bot_data["exec_pid"].update({bot_name: p.pid})
         await asyncio.sleep(3)
     await update.message.reply_text(
-        text="\n".join("done"), parse_mode="HTML", reply_to_message_id=update.message.message_id,
+        text="\n".join("done"),
+        parse_mode="HTML",
+        reply_to_message_id=update.message.message_id,
     )

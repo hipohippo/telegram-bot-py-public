@@ -24,4 +24,3 @@ class MastodonBotConfig(BotConfig):
             access_token=self.access_token,
             api_base_url=self.api_base_url,
         )
- 
