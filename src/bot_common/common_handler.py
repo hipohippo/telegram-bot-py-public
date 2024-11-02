@@ -36,7 +36,7 @@ async def error_notification_handler(update: Update, context: ContextTypes.DEFAU
 
 async def send_file(file: Path, update: Update, context: ContextTypes.DEFAULT_TYPE):
     if (not file) or (not file.is_file()):
-        await update.message.reply_text(f"file invalid")
+        await update.message.reply_text("file invalid")
         return
     elif file.stat().st_size <= 49 * 0x100000:  # up to 49MB
         status_message = await update.message.reply_text("uploading")
@@ -45,7 +45,7 @@ async def send_file(file: Path, update: Update, context: ContextTypes.DEFAULT_TY
         await status_message.delete()
         return
     else:
-        await update.message.reply_text(f"file found but too large, exceeding threshold of 50MB.")
+        await update.message.reply_text("file found but too large, exceeding threshold of 50MB.")
         return
 
 

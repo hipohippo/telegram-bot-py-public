@@ -1,7 +1,7 @@
 import logging
 import sys
 
-from telegram.ext import Application, CommandHandler, MessageHandler, filters
+from telegram.ext import Application, MessageHandler, filters
 
 from bot_common.bot_config.bot_config_parser import parse_from_ini
 from bot_common.bot_factory import BotBuilder

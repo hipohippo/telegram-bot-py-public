@@ -34,11 +34,11 @@ async def stop_bot_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     bot_exec = bot_config.exec_script_map
 
     if (not update.message) or (not update.message.text):
-        await update.message.reply_text(f"need bot name")
+        await update.message.reply_text("need bot name")
         return
     msg = update.message.text.split(" ")
     if len(msg) <= 1:
-        await update.message.reply_text(f"need bot name")
+        await update.message.reply_text("need bot name")
         return
     bot_name = msg[1]
     if bot_name not in bot_exec:

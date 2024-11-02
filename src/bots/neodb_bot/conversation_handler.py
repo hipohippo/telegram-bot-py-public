@@ -1,19 +1,17 @@
 import logging
 import tempfile
-import aiohttp
 
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+import aiohttp
+from neodb.item import NeoDBItem
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto, Update
 from telegram.ext import (
-    CommandHandler,
-    MessageHandler,
     CallbackQueryHandler,
-    ConversationHandler,
+    CommandHandler,
     ContextTypes,
+    ConversationHandler,
+    MessageHandler,
     filters,
 )
-from telegram import InputMediaPhoto
-from neodb.item import NeoDBItem
-
 
 # Define conversation states
 SEARCH, SELECT_ITEM, CHOOSE_ACTION, ACTION_INPUT = range(4)
@@ -43,7 +41,9 @@ async def compose_reply_message(item: NeoDBItem) -> InputMediaPhoto:
             caption += f"<b>ISBN:</b> {item.isbn}\n"
         # caption += f"<b>Description:</b> {item.description[:280]}\n"
         # Create InputMediaPhoto object
-        media = InputMediaPhoto(media=open(image_path, "rb"), caption=caption, parse_mode="HTML")
+        media = InputMediaPhoto(
+            media=open(image_path, "rb"), caption=caption, parse_mode="HTML"
+        )
         return media
 
 
@@ -66,7 +66,12 @@ async def search_items(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
         return SEARCH
 
     keyboard = [
-        [InlineKeyboardButton(item.category + "_" + item.title, callback_data=item.uuid)] for item in results
+        [
+            InlineKeyboardButton(
+                item.category + "_" + item.title, callback_data=item.uuid
+            )
+        ]
+        for item in results
     ] + [[InlineKeyboardButton("EXIT", callback_data="exit")]]
 
     context.user_data["search_results"] = {result.uuid: result for result in results}
@@ -102,7 +107,9 @@ async def select_item(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
     return CHOOSE_ACTION
 
 
-async def handle_action_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def handle_action_choice(
+    update: Update, context: ContextTypes.DEFAULT_TYPE
+) -> int:
     context.user_data["current_state"] = CHOOSE_ACTION
     query = update.callback_query
     await query.answer()
@@ -121,7 +128,9 @@ async def handle_action_choice(update: Update, context: ContextTypes.DEFAULT_TYP
         return ConversationHandler.END
 
 
-async def perform_action_with_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def perform_action_with_text(
+    update: Update, context: ContextTypes.DEFAULT_TYPE
+) -> int:
     context.user_data["current_state"] = ACTION_INPUT
     action_text = update.message.text
     action = context.user_data.get("action")
@@ -129,20 +138,34 @@ async def perform_action_with_text(update: Update, context: ContextTypes.DEFAULT
     item: NeoDBItem = context.user_data["selected_item"]
 
     if action == "complete":
-        status, response = context.bot_data["bot_config"].neodb_object.mark_complete(item.uuid, action_text)
+        status, response = context.bot_data["bot_config"].neodb_object.mark_complete(
+            item.uuid, action_text
+        )
         if status == 200:
-            await update.message.reply_text(f"Marked as completed with note: {action_text}")
+            await update.message.reply_text(
+                f"Marked as completed with note: {action_text}"
+            )
         else:
-            await update.message.reply_text(f"Failed to mark as completed: {status}, {response}")
+            await update.message.reply_text(
+                f"Failed to mark as completed: {status}, {response}"
+            )
     elif action == "wish":
         logging.getLogger(__name__).info(f"marking wish for {item.uuid}")
-        status, response = context.bot_data["bot_config"].neodb_object.mark_wish(item.uuid, action_text)
+        status, response = context.bot_data["bot_config"].neodb_object.mark_wish(
+            item.uuid, action_text
+        )
         if status == 200:
-            await update.message.reply_text(f"Marked as wish to read with note: {action_text}")
+            await update.message.reply_text(
+                f"Marked as wish to read with note: {action_text}"
+            )
         else:
-            await update.message.reply_text(f"Failed to mark as wish to read: {status}, {response}")
+            await update.message.reply_text(
+                f"Failed to mark as wish to read: {status}, {response}"
+            )
     else:
-        await update.message.reply_text(f"action {action} not implemented in this example")
+        await update.message.reply_text(
+            f"action {action} not implemented in this example"
+        )
 
     return ConversationHandler.END
 
@@ -191,7 +214,11 @@ def get_conversation_handler() -> ConversationHandler:
             SEARCH: [MessageHandler(filters.TEXT & ~filters.COMMAND, search_items)],
             SELECT_ITEM: [CallbackQueryHandler(select_item)],
             CHOOSE_ACTION: [CallbackQueryHandler(handle_action_choice)],
-            ACTION_INPUT: [MessageHandler(filters.TEXT & ~filters.COMMAND, perform_action_with_text)],
+            ACTION_INPUT: [
+                MessageHandler(
+                    filters.TEXT & ~filters.COMMAND, perform_action_with_text
+                )
+            ],
         },
         fallbacks=[
             CommandHandler("cancel", cancel),
