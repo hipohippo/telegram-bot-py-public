@@ -8,7 +8,7 @@ from bot_common.bot_factory import BotBuilder
 from bot_common.common_handler import init_browser_handler
 from bots.njt_bot.bot_handler import next_bus_handler, init_cmd, lightrail_alert_handler, path_handler
 from bots.njt_bot.njt_bot_config import NJTBotConfig
-from njtransit.query.path import PathStation
+from public_transit.njtransit.query.path import PathStation
 
 
 def build_bot_app(bot_config_dict) -> Application:
@@ -17,8 +17,9 @@ def build_bot_app(bot_config_dict) -> Application:
         BotBuilder(bot_config_dict["bot_token"], bot_config)
         .add_handlers(
             [
-                CommandHandler("nj", next_bus_handler),
-                CommandHandler("ny", next_bus_handler),
+                CommandHandler("homeny", next_bus_handler),
+                CommandHandler("homenj", next_bus_handler),
+                CommandHandler("pabt", next_bus_handler),
                 CommandHandler("lr", lightrail_alert_handler),
                 CommandHandler(set(PathStation.get_station_map().keys()), path_handler),
             ]
