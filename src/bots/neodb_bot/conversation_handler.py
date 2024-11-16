@@ -12,6 +12,7 @@ from telegram.ext import (
     MessageHandler,
     filters,
 )
+from neodb.neodb import Visibility
 
 # Define conversation states
 SEARCH, SELECT_ITEM, CHOOSE_ACTION, ACTION_INPUT = range(4)
@@ -27,7 +28,7 @@ async def download_image(session: aiohttp.ClientSession, url: str) -> str:
     return ""
 
 
-async def compose_reply_message(item: NeoDBItem) -> InputMediaPhoto:
+async def  compose_reply_message(item: NeoDBItem) -> InputMediaPhoto:
     async with aiohttp.ClientSession() as session:
         # Download the cover image
         image_path = await download_image(session, item.cover_image_url)
@@ -95,8 +96,22 @@ async def select_item(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
     context.user_data["selected_item"] = context.user_data["search_results"][item_uuid]
 
     keyboard = [
-        [InlineKeyboardButton("Complete", callback_data="complete")],
-        [InlineKeyboardButton("Wish", callback_data="wish")],
+        [InlineKeyboardButton("Complete-OnlyMe", callback_data="complete-onlyme")],
+        [
+            InlineKeyboardButton(
+                f"{rating}", callback_data=f"complete-onlyme-rating-{rating}"
+            )
+            for rating in range(1, 6)
+        ],
+        [InlineKeyboardButton("Complete-Public", callback_data="complete-public")],
+        [
+            InlineKeyboardButton(
+                f"{rating}", callback_data=f"complete-public-rating-{rating}"
+            )
+            for rating in range(1, 6)
+        ],
+        [InlineKeyboardButton("Wish-OnlyMe", callback_data="wish-onlyme")],
+        [InlineKeyboardButton("Wish-Public", callback_data="wish-public")],
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
@@ -117,10 +132,17 @@ async def handle_action_choice(
     action = query.data
     context.user_data["action"] = action
 
-    if action in ["complete", "wish"]:
+    if action.startswith("complete") or action.startswith("wish"):
         await query.edit_message_text(
             f"You've chosen to {action} on {context.user_data['selected_item'].title}. "
-            "Please enter any additional text:"
+            "Please enter any additional text or skip:",
+            reply_markup=InlineKeyboardMarkup(
+                [
+                    [
+                        InlineKeyboardButton("SKIP", callback_data="skip")
+                    ]
+                ]
+            ),
         )
         return ACTION_INPUT
     else:
@@ -128,43 +150,58 @@ async def handle_action_choice(
         return ConversationHandler.END
 
 
-async def perform_action_with_text(
+async def perform_action_with_input_text(
     update: Update, context: ContextTypes.DEFAULT_TYPE
 ) -> int:
     context.user_data["current_state"] = ACTION_INPUT
-    action_text = update.message.text
-    action = context.user_data.get("action")
+    if update.callback_query:
+        await update.callback_query.answer()
+        comment_text_after_action = ""
+    else:
+        comment_text_after_action = update.message.text
 
+    item_action = context.user_data.get("action")
     item: NeoDBItem = context.user_data["selected_item"]
 
-    if action == "complete":
+    action_breakdown = item_action.split("-")
+    if action_breakdown[0] == "complete":
         status, response = context.bot_data["bot_config"].neodb_object.mark_complete(
-            item.uuid, action_text
+            item.uuid,
+            comment_text_after_action,
+            Visibility.SELF if action_breakdown[1] == "onlyme" else Visibility.PUBLIC,
+            int(action_breakdown[3]) if len(action_breakdown) > 2 else None,
         )
         if status == 200:
-            await update.message.reply_text(
-                f"Marked as completed with note: {action_text}"
+            await context.bot.send_message(
+                update.effective_user.id,
+                f"Marked as completed with note: {comment_text_after_action}",
             )
         else:
-            await update.message.reply_text(
-                f"Failed to mark as completed: {status}, {response}"
+            await context.bot.send_message(
+                update.effective_user.id,
+                f"Failed to mark as completed: {status}, {response}",
             )
-    elif action == "wish":
+    elif action_breakdown[0] == "wish":
         logging.getLogger(__name__).info(f"marking wish for {item.uuid}")
         status, response = context.bot_data["bot_config"].neodb_object.mark_wish(
-            item.uuid, action_text
+            item.uuid,
+            comment_text_after_action,
+            Visibility.SELF if action_breakdown[1] == "onlyme" else Visibility.PUBLIC,
         )
         if status == 200:
-            await update.message.reply_text(
-                f"Marked as wish to read with note: {action_text}"
+            await context.bot.send_message(
+                update.effective_user.id,
+                f"Marked as wish to read with note: {comment_text_after_action}",
             )
         else:
-            await update.message.reply_text(
-                f"Failed to mark as wish to read: {status}, {response}"
+            await context.bot.send_message(
+                update.effective_user.id,
+                f"Failed to mark as wish to read: {status}, {response}",
             )
     else:
-        await update.message.reply_text(
-            f"action {action} not implemented in this example"
+        await context.bot.send_message(
+            update.effective_user.id,
+            f"action {item_action} not implemented in this example",
         )
 
     return ConversationHandler.END
@@ -216,8 +253,9 @@ def get_conversation_handler() -> ConversationHandler:
             CHOOSE_ACTION: [CallbackQueryHandler(handle_action_choice)],
             ACTION_INPUT: [
                 MessageHandler(
-                    filters.TEXT & ~filters.COMMAND, perform_action_with_text
-                )
+                    filters.TEXT & ~filters.COMMAND, perform_action_with_input_text
+                ),
+                CallbackQueryHandler(perform_action_with_input_text),
             ],
         },
         fallbacks=[
