@@ -1,11 +1,16 @@
 import logging
-from typing import List, Tuple, Optional
-
-from telegram.ext import BaseHandler, Application, ApplicationBuilder, Defaults, CommandHandler
-from telegram.ext._utils.types import JobCallback, CCT
+from typing import List, Optional, Tuple
 
 from bot_common.bot_config.bot_config import BotConfig
-from bot_common.common_handler import poke_handler, heart_beat_job
+from bot_common.common_handler import heart_beat_job, poke_handler
+from telegram.ext import (
+    Application,
+    ApplicationBuilder,
+    BaseHandler,
+    CommandHandler,
+    Defaults,
+)
+from telegram.ext._utils.types import CCT, JobCallback
 
 
 ## not in use. to be deprecated
@@ -81,6 +86,10 @@ class BotBuilder:
             ApplicationBuilder()
             .token(self.bot_token)
             .http_version("1.1")
+            .connect_timeout(120)
+            .read_timeout(120)
+            .write_timeout(120)
+            .media_write_timeout(120)
             .get_updates_http_version("1.1")
             .concurrent_updates(3)
             .defaults(df)  #
