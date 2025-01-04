@@ -1,11 +1,10 @@
 import asyncio
 import subprocess
 
-from telegram import Update
-from telegram.ext import ContextTypes
-
 from bot_common.bot_controller.bot_controller_config import BotControllerConfig
 from bot_common.util import restricted
+from telegram import Update
+from telegram.ext import ContextTypes
 
 
 @restricted
@@ -86,13 +85,19 @@ async def test_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     msg = update.message.text.split(" ")
     p = subprocess.run(msg[1:], start_new_session=True, stdout=subprocess.PIPE)
     await asyncio.sleep(3)
-    await update.message.reply_text(text=f"test run, {p.stdout.decode('utf-8')}", parse_mode="HTML")
+    await update.message.reply_text(
+        text=f"test run, {p.stdout.decode('utf-8')}", parse_mode="HTML"
+    )
 
 
 @restricted
 async def list_active_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     bot_config: BotControllerConfig = context.bot_data["bot_config"]
-    messages = [f"{bot_name}: {pid}" for bot_name, pid in context.bot_data["exec_pid"].items() if pid]
+    messages = [
+        f"{bot_name}: {pid}"
+        for bot_name, pid in context.bot_data["exec_pid"].items()
+        if pid
+    ]
     if not messages:
         messages = ["no running bots"]
     await update.message.reply_text(

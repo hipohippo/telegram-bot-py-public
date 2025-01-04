@@ -43,20 +43,41 @@ def restricted(func):
     """
 
     @wraps(func)
-    def wrapped(update, context, *args, **kwargs):
+    async def wrapped(update, context, *args, **kwargs):
         user_id = update.effective_user.id
         if (context.bot_data["bot_config"].white_list_id is not None) and (
             user_id not in context.bot_data["bot_config"].white_list_id
         ):
-            logging.getLogger(__name__).error(f"Unauthorized access denied for {user_id}")
+            logging.getLogger(__name__).error(
+                f"Unauthorized access denied for {user_id}"
+            )
             return
-        return func(update, context, *args, **kwargs)
+        return await func(update, context, *args, **kwargs)
+
+    return wrapped
+
+
+def restricted_to_private_chat(func):
+    """
+    decorator to restrict access to private chat
+    """
+
+    @wraps(func)
+    async def wrapped(
+        update: Update, context: ContextTypes.DEFAULT_TYPE, *args, **kwargs
+    ):
+        if update.message.chat.type != "private":
+            logging.getLogger(__name__).error("only allowed in private chat")
+            return
+        return await func(update, context, *args, **kwargs)
 
     return wrapped
 
 
 def format_white_list(white_list_str: Optional[str]) -> Optional[List[int]]:
-    return [int(x.strip()) for x in white_list_str.split(",")] if white_list_str else None
+    return (
+        [int(x.strip()) for x in white_list_str.split(",")] if white_list_str else None
+    )
 
 
 def slice_list_for_keyboard_layout(x: list, size: int):
