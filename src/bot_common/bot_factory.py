@@ -44,6 +44,7 @@ def bot_factory(
 
 
 class BotBuilder:
+    MISFIRE_GRACE_TIME = 120
     default_repeating_jobs = [(heart_beat_job, {"first": 5, "interval": 4 * 60 * 60})]
     default_handler = [
         CommandHandler("poke", poke_handler),
@@ -101,11 +102,21 @@ class BotBuilder:
             application.add_error_handler(self.error_handler)
 
         for repeating_job in self.repeating_jobs:
-            application.job_queue.run_repeating(repeating_job[0], **repeating_job[1])
+            application.job_queue.run_repeating(
+                repeating_job[0],
+                **repeating_job[1],
+                misfire_grace_time=self.MISFIRE_GRACE_TIME,
+            )
 
         for onetime_job in self.onetime_jobs:
-            application.job_queue.run_once(onetime_job[0], **onetime_job[1])
+            application.job_queue.run_once(
+                onetime_job[0],
+                **onetime_job[1],
+                misfire_grace_time=self.MISFIRE_GRACE_TIME,
+            )
 
         for daily_job in self.daily_jobs:
-            application.job_queue.run_daily(daily_job[0], **daily_job[1])
+            application.job_queue.run_daily(
+                daily_job[0], **daily_job[1], misfire_grace_time=self.MISFIRE_GRACE_TIME
+            )
         return application
