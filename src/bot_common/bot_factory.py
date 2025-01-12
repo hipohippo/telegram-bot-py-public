@@ -49,6 +49,7 @@ class BotBuilder:
     default_handler = [
         CommandHandler("poke", poke_handler),
     ]
+    common_job_kwargs = {"job_kwargs": {"misfire_grace_time": MISFIRE_GRACE_TIME}}
 
     def __init__(self, bot_token: str, bot_config: BotConfig):
         self.bot_token = bot_token
@@ -104,19 +105,17 @@ class BotBuilder:
         for repeating_job in self.repeating_jobs:
             application.job_queue.run_repeating(
                 repeating_job[0],
-                **repeating_job[1],
-                misfire_grace_time=self.MISFIRE_GRACE_TIME,
+                **(repeating_job[1] | self.common_job_kwargs),
             )
 
         for onetime_job in self.onetime_jobs:
             application.job_queue.run_once(
                 onetime_job[0],
-                **onetime_job[1],
-                misfire_grace_time=self.MISFIRE_GRACE_TIME,
+                **(onetime_job[1] | self.common_job_kwargs),
             )
 
         for daily_job in self.daily_jobs:
             application.job_queue.run_daily(
-                daily_job[0], **daily_job[1], misfire_grace_time=self.MISFIRE_GRACE_TIME
+                daily_job[0], **(daily_job[1] | self.common_job_kwargs)
             )
         return application
