@@ -2,6 +2,7 @@ import logging
 from configparser import SectionProxy
 from functools import wraps
 from typing import Callable, List, Optional, Tuple
+from urllib.parse import parse_qs, urlparse
 
 from telegram import Update
 from telegram.ext import ContextTypes
@@ -94,3 +95,68 @@ def parse_command_and_argument(text_message) -> Tuple[str, List[str]]:
     assert text_message[0] == "/"
     cmd = text_message.split(" ")
     return cmd[0], cmd[1:]
+
+
+def parse_tg_channel_chat_link(link: str) -> Tuple[str, int, int]:
+    """Extract channel username, post ID, and comment ID from the link."""
+    # Example link: https://t.me/some_channel/7617?comment=16624
+    try:
+        base, query = link.split("?")
+        channel_username, post_id = base.replace("https://t.me/", "").split("/")
+        comment_id = query.split("=")[1]
+        return channel_username, int(post_id), int(comment_id)
+    except ValueError:
+        raise ValueError("Invalid link format")
+
+
+def parse_channel_message_link(link: str) -> Tuple[int, int, int]:
+    """
+    Extract the channel/group ID, message ID, and thread ID from the given Telegram link.
+
+    Args:
+        link (str): The Telegram link (e.g., https://t.me/c/123/456?thread=789).
+
+    Returns:
+        tuple: A tuple containing (channel_id, message_id, thread_id) as integers, or None if parsing fails.
+    """
+    try:
+        # Parse the URL
+        parsed_url = urlparse(link)
+
+        # Ensure it's a valid Telegram URL
+        if parsed_url.netloc != "t.me":
+            raise ValueError("Invalid Telegram link format.")
+
+        # Extract the path components
+        path_parts = parsed_url.path.split("/")
+        if len(path_parts) < 3:
+            raise ValueError("Incomplete path in the link.")
+
+        # Extract the query parameters
+        query_params = parse_qs(parsed_url.query)
+
+        # Handle both link formats
+        if path_parts[1] == "c":
+            # Format: t.me/c/123/456?thread=789
+            channel_id = int(path_parts[2])
+            post_id = int(path_parts[3])
+            thread_id = (
+                int(query_params.get("thread", [None])[0])
+                if "thread" in query_params
+                else None
+            )
+        else:
+            # Format: t.me/groupname/789?comment=456
+            channel_id = None
+            thread_id = int(path_parts[2])
+            post_id = (
+                int(query_params.get("comment", [None])[0])
+                if "comment" in query_params
+                else None
+            )
+
+        return channel_id, post_id, thread_id
+
+    except Exception as e:
+        print(f"Error extracting IDs: {e}")
+        return None, None, None
