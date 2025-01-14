@@ -21,6 +21,9 @@ class ChannelBotConfig(BotConfig):
         self.managed_channel_groups = self._parse_channels(
             bot_config_dict["managed_channel_groups"]
         )
+        self.do_not_ban_user_ids = self._parse_channels(
+            bot_config_dict["do_not_ban_user_ids"]
+        )
         self.suspicious_keywords_file = bot_config_dict["suspicious_keywords_file"]
         self.suspicious_keywords = self._parse_suspicious_keywords(
             self.suspicious_keywords_file
@@ -31,6 +34,12 @@ class ChannelBotConfig(BotConfig):
 
         self.message_id_to_user_id_file = bot_config_dict["message_id_to_user_id_file"]
         self.message_id_to_user_id = pd.read_csv(self.message_id_to_user_id_file)
+        self.message_id_to_user_id["message_id"] = self.message_id_to_user_id[
+            "message_id"
+        ].astype(int)
+        self.message_id_to_user_id["user_id"] = self.message_id_to_user_id[
+            "user_id"
+        ].astype(int)
 
     @staticmethod
     def _parse_channels(channels_str: str) -> List[int]:

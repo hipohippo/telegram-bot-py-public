@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import traceback
 
 import pandas as pd
 from bot_common.util import parse_channel_message_link
@@ -71,53 +72,82 @@ async def reload_suspicious_keywords(update: Update, context: CallbackContext) -
 
 
 async def filter_handler(update: Update, context: CallbackContext) -> None:
+    """Filter messages from managed channels and delete them if they contain suspicious keywords.
+    1. We can fetch user id and group id from message directly. But we have to get channel id from reply_to_message.
+    2. When we ban user, it has to be the group chat id, not the channel id.
+    3. We have to save message id to user id mapping to a csv file.
+    Args:
+        update (Update): _description_
+        context (CallbackContext): _description_
+    """
     bot_config = context.bot_data["bot_config"]
-    suspicious_keywords = bot_config.suspicious_keywords
     message = update.message
+    reply_to_message = message.reply_to_message
 
-    if message:
-        content = message.text
-        user_id = message.from_user.id  ## question is this the actual user id?
+    if not message or not reply_to_message:
+        return
 
-        is_from_managed_channel = (
-            message.reply_to_message
-            and message.reply_to_message.sender_chat
-            and (message.reply_to_message.sender_chat.id in bot_config.managed_channels)
+    content = ""
+
+    if message.text:
+        content += message.text
+    if message.caption:
+        content += message.caption
+
+    user_id = message.from_user.id
+
+    is_from_managed_channel = (
+        message
+        and reply_to_message.sender_chat
+        and (reply_to_message.sender_chat.id in bot_config.managed_channels)
+    )
+
+    if not is_from_managed_channel:
+        logging.getLogger(__name__).info(
+            f"not from managed channel, channel_id: {reply_to_message.sender_chat.id}, channel_group_id: {message.chat.id}"
         )
+        return
 
-        if is_from_managed_channel:
-            chat_id = message.reply_to_message.sender_chat.id
-            bot_config.message_id_to_user_id = pd.concat(
-                [
-                    bot_config.message_id_to_user_id,
-                    pd.DataFrame(
-                        {"message_id": [message.message_id], "user_id": [user_id]}
-                    ),
-                ],
-                ignore_index=True,
-            ).reset_index(drop=True)
+    channel_id = reply_to_message.sender_chat.id
+    logging.getLogger(__name__).info(
+        f"from managed channel, channel_id: {channel_id}, channel_group_id: {message.chat.id}"
+    )
 
-            logging.getLogger(__name__).info(
-                f"Saved message ID {message.message_id} to user ID {user_id}."
+    group_chat_id = message.chat.id
+    bot_config.message_id_to_user_id = pd.concat(
+        [
+            bot_config.message_id_to_user_id,
+            pd.DataFrame(
+                {
+                    "message_id": [int(message.message_id)],
+                    "user_id": [int(user_id)],
+                }
+            ),
+        ],
+        ignore_index=True,
+    ).reset_index(drop=True)
+
+    logging.getLogger(__name__).info(
+        f"Saved message ID {message.message_id} to user ID {user_id}."
+    )
+
+    if content and any(
+        keyword.upper() in content.upper() for keyword in bot_config.suspicious_keywords
+    ):
+        try:
+            logging.getLogger(__name__).info(f"Deleting message...{content}")
+            await asyncio.sleep(1)
+            await context.bot.delete_message(
+                chat_id=group_chat_id, message_id=message.message_id
             )
-            if content and any(
-                keyword.upper() in content.upper() for keyword in suspicious_keywords
-            ):
-                try:
-                    logging.getLogger(__name__).info("Deleting message...")
-                    await asyncio.sleep(1)
-                    await context.bot.delete_message(
-                        chat_id=chat_id, message_id=message.message_id
-                    )
-                    logging.getLogger(__name__).info(
-                        f"Deleted message from user {user_id} in channel {chat_id} containing suspicious {content}."
-                    )
-                    await context.bot.ban_chat_member(chat_id=chat_id, user_id=user_id)
-                    logging.getLogger(__name__).info(
-                        f"Banned user {user_id} in channel {chat_id}."
-                    )
-                except Exception as e:
-                    logging.getLogger(__name__).error(f"Failed to delete message: {e}")
+            logging.getLogger(__name__).info(
+                f"Deleted message from user {user_id} in channel group {group_chat_id}, channel {channel_id} containing suspicious {content}."
+            )
+            await ban_user_function(context, user_id, group_chat_id)
+        except Exception as e:
+            logging.getLogger(__name__).error(
+                f"Failed to delete message: {e} from group {group_chat_id}, channel {channel_id}, message_id: {message.message_id}, by {user_id}"
+            )
 
 
 async def delete_post_handler(update: Update, context: CallbackContext) -> None:
@@ -134,34 +164,46 @@ async def delete_post_handler(update: Update, context: CallbackContext) -> None:
             f"Deleted message {post_id}, thread {thread_id}, from channel {group_id}."
         )
         user_id = bot_config.message_id_to_user_id[
-            bot_config.message_id_to_user_id["message_id"] == post_id
+            bot_config.message_id_to_user_id["message_id"] == int(post_id)
         ]["user_id"]
         if len(user_id) > 0:
-            user_id = user_id.iloc[0]
+            user_id = int(user_id.iloc[0])
         else:
             logging.getLogger(__name__).error(
                 f"No user ID found for message {post_id} in channel {group_id}."
             )
             return
-        await context.bot.ban_chat_member(chat_id=group_id, user_id=user_id)
+        await context.bot.ban_chat_member(
+            chat_id=group_id, user_id=user_id, revoke_messages=True
+        )
         logging.getLogger(__name__).info(
             f"Banned user {user_id} in channel {group_id}."
         )
-    except Exception as e:
+    except Exception:
         logging.getLogger(__name__).error(
-            f"Failed to delete message: {e}, channel_group_id: {channel_group_id}, post_id: {post_id}, thread_id: {thread_id}"
+            f"Exception: {traceback.format_exc()}, channel_group_id: {group_id}, post_id: {post_id}, thread_id: {thread_id}"
         )
 
 
-## not in use
-async def ban_user_handler(update: Update, context: CallbackContext) -> None:
+async def ban_user_function(
+    context: CallbackContext, user_id: int, group_chat_id: int
+) -> None:
     bot_config = context.bot_data["bot_config"]
-    userid = context.args[0]
-    chat_id = bot_config.managed_channels[0]
+    if user_id not in bot_config.do_not_ban_user_ids:
+        await context.bot.ban_chat_member(chat_id=group_chat_id, user_id=user_id)
+        logging.getLogger(__name__).info(
+            f"Banned user {user_id} in channel group {group_chat_id}."
+        )
+    else:
+        logging.getLogger(__name__).info(
+            f"User {user_id} is in do not ban user list, skipping ban."
+        )
 
-    if userid:
-        await context.bot.ban_chat_member(chat_id=chat_id, user_id=userid)
-        logging.getLogger(__name__).info(f"Banned user {userid} in channel {chat_id}.")
+
+async def ban_user_handler(update: Update, context: CallbackContext) -> None:
+    userid = context.args[0]
+    group_chat_id = context.bot_data["bot_config"].managed_channel_groups[1]
+    await ban_user_function(context, userid, group_chat_id)
 
 
 async def save_message_id_to_user_id(context: CallbackContext) -> None:
