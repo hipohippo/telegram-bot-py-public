@@ -81,11 +81,12 @@ async def filter_handler(update: Update, context: CallbackContext) -> None:
         context (CallbackContext): _description_
     """
     bot_config = context.bot_data["bot_config"]
+
+    if not update.message or not update.message.reply_to_message:
+        return
+
     message = update.message
     reply_to_message = message.reply_to_message
-
-    if not message or not reply_to_message:
-        return
 
     content = ""
 
@@ -104,7 +105,7 @@ async def filter_handler(update: Update, context: CallbackContext) -> None:
 
     if not is_from_managed_channel:
         logging.getLogger(__name__).info(
-            f"not from managed channel, channel_id: {reply_to_message.sender_chat.id}, channel_group_id: {message.chat.id}"
+            f"not from managed channel or sender_chat is None or sender_chat.id is None, message: {message}"
         )
         return
 
@@ -190,7 +191,9 @@ async def ban_user_function(
 ) -> None:
     bot_config = context.bot_data["bot_config"]
     if user_id not in bot_config.do_not_ban_user_ids:
-        await context.bot.ban_chat_member(chat_id=group_chat_id, user_id=user_id)
+        await context.bot.ban_chat_member(
+            chat_id=group_chat_id, user_id=user_id, revoke_messages=True
+        )
         logging.getLogger(__name__).info(
             f"Banned user {user_id} in channel group {group_chat_id}."
         )
