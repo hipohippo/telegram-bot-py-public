@@ -2,7 +2,11 @@ import logging
 from typing import List, Optional, Tuple
 
 from bot_common.bot_config.bot_config import BotConfig
-from bot_common.common_handler import heart_beat_job, poke_handler
+from bot_common.common_handler import (
+    heart_beat_job,
+    poke_handler,
+    error_handler_network,
+)
 from telegram.ext import (
     Application,
     ApplicationBuilder,
@@ -98,6 +102,7 @@ class BotBuilder:
             .build()
         )
         application.bot_data["bot_config"] = self.bot_config
+        application.add_error_handler(error_handler_network)
         application.add_handlers(self.handlers)
         if self.error_handler:
             application.add_error_handler(self.error_handler)

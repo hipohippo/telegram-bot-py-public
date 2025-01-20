@@ -1,8 +1,9 @@
 from pathlib import Path
-
+import logging
 import nodriver as uc
 import pandas as pd
 from nodriver.core.browser import Browser
+import telegram
 from telegram import Update
 from telegram.ext import ContextTypes
 
@@ -29,9 +30,22 @@ async def poke_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("poke back")
 
 
-async def error_notification_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def error_notification_handler(
+    update: Update, context: ContextTypes.DEFAULT_TYPE
+):
     bot_config: BotConfig = context.bot_data["bot_config"]
     await context.bot.send_message(chat_id=bot_config.error_notify_chat)
+
+
+async def error_handler_network(
+    update: Update, context: ContextTypes.DEFAULT_TYPE
+) -> None:
+    """Log the error and handle specific exceptions."""
+    logger = logging.getLogger(__name__)
+    logger.error(msg="Exception while handling update:", exc_info=context.error)
+
+    if isinstance(context.error, telegram.error.NetworkError):
+        logger.warning("httpx network error occurred")
 
 
 async def send_file(file: Path, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -45,7 +59,9 @@ async def send_file(file: Path, update: Update, context: ContextTypes.DEFAULT_TY
         await status_message.delete()
         return
     else:
-        await update.message.reply_text("file found but too large, exceeding threshold of 50MB.")
+        await update.message.reply_text(
+            "file found but too large, exceeding threshold of 50MB."
+        )
         return
 
 
