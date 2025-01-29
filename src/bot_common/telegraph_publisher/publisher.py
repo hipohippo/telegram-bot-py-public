@@ -2,23 +2,37 @@ import logging
 import time
 from typing import List
 
+import pandas as pd
 from telegraph import Telegraph
 
 
-def publish_single(telegraph_publisher: Telegraph, title: str, author: str, html_content: str) -> str:
+def publish_single(
+    telegraph_publisher: Telegraph, title: str, author: str, html_content: str
+) -> str:
     attempt = 1
     MAX_ATTEMPT = 2
+    last_error = None
     while attempt <= MAX_ATTEMPT:
         try:
-            response = telegraph_publisher.create_page(title=title, author_name=author, html_content=html_content)
+            response = telegraph_publisher.create_page(
+                title=title,
+                author_name=author,
+                html_content=html_content,
+            )
             url = response["url"]
             logging.getLogger(__name__).info(f"published to {url}")
             return url
         except Exception as e:
+            if attempt == MAX_ATTEMPT:
+                with open(
+                    f"error_{pd.Timestamp.now().strftime('%Y-%m-%d_%H-%M-%S')}.txt", "w"
+                ) as f:
+                    f.write(html_content)
+            last_error = e
             logging.getLogger(__name__).error(e)
             time.sleep(3)
             attempt += 1
-    raise Exception("failed to publish to telegraph. connection problem")
+    raise last_error
 
 
 def chop_str_group(str_list: List[str], chunk_size: int) -> List[int]:
@@ -43,7 +57,10 @@ def chop_str_group(str_list: List[str], chunk_size: int) -> List[int]:
 
 
 def publish_chunk_telegraph(
-    telegraph_publisher: Telegraph, title: str, author: str, html_content_group: List[str]
+    telegraph_publisher: Telegraph,
+    title: str,
+    author: str,
+    html_content_group: List[str],
 ) -> List[str]:
     cutoff_index = chop_str_group(html_content_group, chunk_size=25000)
     url_list = []
@@ -51,7 +68,9 @@ def publish_chunk_telegraph(
         url_list.append(
             publish_single(
                 telegraph_publisher,
-                title + f" ({idx+1}/{len(cutoff_index)-1})" if (len(cutoff_index) >= 3) else title,
+                title + f" ({idx+1}/{len(cutoff_index)-1})"
+                if (len(cutoff_index) >= 3)
+                else title,
                 author,
                 "".join(html_content_group[cutoff_index[idx] : cutoff_index[idx + 1]]),
             )
