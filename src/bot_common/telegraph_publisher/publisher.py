@@ -62,7 +62,10 @@ def publish_chunk_telegraph(
     author: str,
     html_content_group: List[str],
 ) -> List[str]:
-    cutoff_index = chop_str_group(html_content_group, chunk_size=25000)
+    cutoff_index = chop_str_group(html_content_group, chunk_size=20000)
+    logging.getLogger(__name__).info(
+        f"total html length {sum([len(s) for s in html_content_group])}, cutoff_index {cutoff_index}"
+    )
     url_list = []
     for idx in range(len(cutoff_index) - 1):
         url_list.append(
