@@ -5,7 +5,9 @@ from bs4 import BeautifulSoup
 from selenium.webdriver.chrome.webdriver import WebDriver
 
 
-def _deprecated_extract_content(web_driver: WebDriver, url: str) -> Tuple[str, List[str], BeautifulSoup]:
+def _deprecated_extract_content(
+    web_driver: WebDriver, url: str
+) -> Tuple[str, List[str], BeautifulSoup]:
     web_driver.switch_to.window(web_driver.window_handles[0])
     web_driver.get(url)
     soup = BeautifulSoup(web_driver.page_source, "html.parser")
@@ -20,7 +22,11 @@ def extract_text_from_soup(soup: BeautifulSoup):
     paragraphs = []
     for tag in tags:
         text = tag.get_text()
-        if text.find("<audio>") == -1 and text.find("hoto:") == -1 and text != "Advertisement":
+        if (
+            text.find("<audio>") == -1
+            and text.find("hoto:") == -1
+            and text != "Advertisement"
+        ):
             paragraphs.append(text)
     return title, paragraphs
 

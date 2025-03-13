@@ -10,7 +10,9 @@ from telegram.ext import ContextTypes
 from telegraph import Telegraph
 
 
-def publish_single(telegraph_publisher: Telegraph, title: str, author: str, html_content: str) -> str:
+def publish_single(
+    telegraph_publisher: Telegraph, title: str, author: str, html_content: str
+) -> str:
     attempt = 1
     MAX_ATTEMPT = 2
     last_error = None
@@ -26,7 +28,9 @@ def publish_single(telegraph_publisher: Telegraph, title: str, author: str, html
             return url
         except Exception as e:
             if attempt == MAX_ATTEMPT:
-                with open(f"error_{pd.Timestamp.now().strftime('%Y-%m-%d_%H-%M-%S')}.txt", "w") as f:
+                with open(
+                    f"error_{pd.Timestamp.now().strftime('%Y-%m-%d_%H-%M-%S')}.txt", "w"
+                ) as f:
                     f.write(html_content)
             last_error = e
             logging.getLogger(__name__).error(e)
@@ -71,7 +75,9 @@ def publish_chunk_telegraph(
         url_list.append(
             publish_single(
                 telegraph_publisher,
-                title + f" ({idx+1}/{len(cutoff_index)-1})" if (len(cutoff_index) >= 3) else title,
+                title + f" ({idx + 1}/{len(cutoff_index) - 1})"
+                if (len(cutoff_index) >= 3)
+                else title,
                 author,
                 "".join(html_content_group[cutoff_index[idx] : cutoff_index[idx + 1]]),
             )
@@ -91,11 +97,17 @@ async def publish_chunk_to_telegraph(
     error_notify_chat: int,
 ):
     try:
-        logging.getLogger(__name__).info(f"total html length {sum([len(s) for s in html_element_list])}")
-        telegraph_urls: List[str] = publish_chunk_telegraph(telegraph_publisher, title, author, html_element_list)
+        logging.getLogger(__name__).info(
+            f"total html length {sum([len(s) for s in html_element_list])}"
+        )
+        telegraph_urls: List[str] = publish_chunk_telegraph(
+            telegraph_publisher, title, author, html_element_list
+        )
         return telegraph_urls
     except Exception:
-        error_message = f"failed in chat {update.effective_chat.id}: {traceback.format_exc()}"
+        error_message = (
+            f"failed in chat {update.effective_chat.id}: {traceback.format_exc()}"
+        )
         logging.getLogger(__name__).error(error_message)
         await context.bot.send_message(error_notify_chat, text=error_message)
         await asyncio.sleep(5)

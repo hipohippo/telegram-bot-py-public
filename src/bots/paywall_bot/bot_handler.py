@@ -29,11 +29,15 @@ async def unified_command_handler(update: Update, context: ContextTypes.DEFAULT_
         await _translate_handler(update, context, telegraph_url)
 
 
-async def paywall_handler(update: Update, context: ContextTypes.DEFAULT_TYPE, page_url: str):
+async def paywall_handler(
+    update: Update, context: ContextTypes.DEFAULT_TYPE, page_url: str
+):
     logging.info(f"received request for {page_url}")
     bot_config: PaywallBotConfig = context.bot_data["bot_config"]
     browser: Browser = context.bot_data["browser"]
-    if not np.any([page_url.lower().find(site) >= 0 for site in bot_config.supported_sites]):
+    if not np.any(
+        [page_url.lower().find(site) >= 0 for site in bot_config.supported_sites]
+    ):
         await update.message.reply_text("website not supported yet")
         return
 
@@ -45,21 +49,25 @@ async def paywall_handler(update: Update, context: ContextTypes.DEFAULT_TYPE, pa
             soup = BeautifulSoup(content, "html.parser")
             title, paragraphs = extract_text_from_soup(soup)
             output_html_content = paragraphs_to_html(paragraphs)
-            telegraph_url = publish_single(bot_config.telegraph_publisher, title, "bot", output_html_content)
+            telegraph_url = publish_single(
+                bot_config.telegraph_publisher, title, "bot", output_html_content
+            )
             await update.message.reply_html(text=telegraph_url)
             break
         except Exception as e:
-            error_message = (
-                f"failed in chat {update.effective_chat.id}: {e}. attempt {attempt + 1}/{bot_config.max_attempts}"
-            )
+            error_message = f"failed in chat {update.effective_chat.id}: {e}. attempt {attempt + 1}/{bot_config.max_attempts}"
             logging.error(error_message)
-            await context.bot.send_message(bot_config.error_notify_chat, text=error_message)
+            await context.bot.send_message(
+                bot_config.error_notify_chat, text=error_message
+            )
             await asyncio.sleep(5)
     return telegraph_url
 
 
 ## _deprecated
-async def _translate_handler(update: Update, context: ContextTypes.DEFAULT_TYPE, telegraph_url: str):
+async def _translate_handler(
+    update: Update, context: ContextTypes.DEFAULT_TYPE, telegraph_url: str
+):
     logging.info(f"received request to translate {telegraph_url}")
     status_message: Message = await update.message.reply_text(
         text="translating...",
@@ -73,9 +81,13 @@ async def _translate_handler(update: Update, context: ContextTypes.DEFAULT_TYPE,
         )
         # TODO 200 in config
         candidates = [paragraph for paragraph in paragraphs if len(paragraph) >= 200]
-        translated_paragraphs = deepl_bulk_translate(browser, page_index, bot_config.translate_throttle, candidates)
+        translated_paragraphs = deepl_bulk_translate(
+            browser, page_index, bot_config.translate_throttle, candidates
+        )
         translated_content = paragraphs_to_html(translated_paragraphs)
-        translated_url = publish_single(bot_config.telegraph_publisher, translated_title, "__", translated_content)
+        translated_url = publish_single(
+            bot_config.telegraph_publisher, translated_title, "__", translated_content
+        )
         logging.info(f"translated and published to{translated_url}")
         await update.message.reply_html(text=translated_url)
     except Exception as e:

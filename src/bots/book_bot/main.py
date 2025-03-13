@@ -36,6 +36,9 @@ def build_bot_app(bot_config_dict: Union[dict, SectionProxy]) -> Application:
 
 
 if __name__ == "__main__":
-    logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO)
+    logging.basicConfig(
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        level=logging.INFO,
+    )
     bot_app = build_bot_app(parse_from_ini(sys.argv[1]))
     bot_app.run_polling()

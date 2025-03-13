@@ -17,11 +17,18 @@ async def search_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             sliced_res = [
                 str(i)
                 + "_"
-                + ", ".join([str(res["data"][i].get(k, "")) for k in neodb_config.subkeys[res["data"][i]["category"]]])
+                + ", ".join(
+                    [
+                        str(res["data"][i].get(k, ""))
+                        for k in neodb_config.subkeys[res["data"][i]["category"]]
+                    ]
+                )
                 for i in range(min(neodb_config.max_item_per_query, len(res["data"])))
             ]
             joined_res = "\n".join(sliced_res)
             logging.getLogger(__name__).info(f"sliced_res: {joined_res}")
             await update.message.reply_text(joined_res)
         else:
-            await update.message.reply_text(f"No results found or error occurred. {status}")
+            await update.message.reply_text(
+                f"No results found or error occurred. {status}"
+            )

@@ -13,4 +13,8 @@ def init_df(working_dir: Path):
 
 
 def search_book_df(keyword: str, book_df: pd.DataFrame) -> List[Path]:
-    return [x["fullpath"] for idx, x in book_df.iterrows() if x["name"].lower().find(keyword.lower()) >= 0]
+    return [
+        x["fullpath"]
+        for idx, x in book_df.iterrows()
+        if x["name"].lower().find(keyword.lower()) >= 0
+    ]

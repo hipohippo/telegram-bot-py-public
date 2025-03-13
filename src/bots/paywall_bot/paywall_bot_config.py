@@ -15,7 +15,9 @@ class PaywallBotConfig(BotConfig):
             white_list_id=format_white_list(bot_config_dict["white_list"]),
             bot_name="Paywall Bot",
         )
-        self.telegraph_publisher = Telegraph(access_token=bot_config_dict["telegraph_token"])
+        self.telegraph_publisher = Telegraph(
+            access_token=bot_config_dict["telegraph_token"]
+        )
         self.supported_sites = {
             "wsj",
             "nyt",

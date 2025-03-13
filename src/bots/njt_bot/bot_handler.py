@@ -5,7 +5,11 @@ from bot_common.util import restricted
 from public_transit.njtransit.query.bus_and_stop import NJTBusStop
 from public_transit.njtransit.query.bus_api import next_bus_job
 from public_transit.njtransit.query.lightrail_alert import get_hblr_alert
-from public_transit.njtransit.query.path import html_format_path_status_output, get_train_status, PathStation
+from public_transit.njtransit.query.path import (
+    html_format_path_status_output,
+    get_train_status,
+    PathStation,
+)
 
 
 async def init_cmd(context: ContextTypes.DEFAULT_TYPE):
@@ -47,9 +51,13 @@ async def path_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     station_query = update.message.text[1:]
     station_map = PathStation.get_station_map()
     if not station_query or station_query not in station_map.keys():
-        await update.message.reply_text(f"unknown station name. choose from f{' '.join(station_map.keys())}")
+        await update.message.reply_text(
+            f"unknown station name. choose from f{' '.join(station_map.keys())}"
+        )
         return
 
     current_station = station_map.get(station_query)
-    path_train_status = html_format_path_status_output(current_station, get_train_status(current_station))
+    path_train_status = html_format_path_status_output(
+        current_station, get_train_status(current_station)
+    )
     await update.message.reply_text(path_train_status, parse_mode="HTML")

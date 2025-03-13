@@ -46,16 +46,23 @@ async def all_book_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 @restricted
 async def reply_book_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keywords: str = update.message.text
-    book_files: List[Path] = search_book_df(keywords, context.bot_data["bot_config"].book_df)
+    book_files: List[Path] = search_book_df(
+        keywords, context.bot_data["bot_config"].book_df
+    )
     MAX_ITEMS = 20
     # await context.bot.send_message(update.message.chat_id, f"found {len(book_files)} files.")
     if len(book_files) > 0:
         context.chat_data["status"] = "REPLIED"
-        context.chat_data["books_to_select"] = book_files[: min(len(book_files), MAX_ITEMS)]
+        context.chat_data["books_to_select"] = book_files[
+            : min(len(book_files), MAX_ITEMS)
+        ]
         await update.message.reply_text(
-            f"found {len(context.chat_data['books_to_select'] )} books\n"
+            f"found {len(context.chat_data['books_to_select'])} books\n"
             + "\n".join(
-                [f"{i+1}. {book_file.name}" for i, book_file in enumerate(context.chat_data["books_to_select"])]
+                [
+                    f"{i + 1}. {book_file.name}"
+                    for i, book_file in enumerate(context.chat_data["books_to_select"])
+                ]
             )
         )
         return
@@ -69,7 +76,9 @@ async def select_from_results(update: Update, context: ContextTypes.DEFAULT_TYPE
     try:
         selected_book_number = int(update.message.text)
     except:
-        await update.message.reply_text("Invalid selection. Type 0 to exit and start a new search")
+        await update.message.reply_text(
+            "Invalid selection. Type 0 to exit and start a new search"
+        )
         return
     if 1 <= selected_book_number <= len(context.chat_data["books_to_select"]):
         book_file: Path = context.chat_data["books_to_select"][selected_book_number - 1]

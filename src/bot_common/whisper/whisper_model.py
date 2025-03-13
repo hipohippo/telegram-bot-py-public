@@ -14,4 +14,8 @@ model = whisper.load_model(str(model_checkpoint.resolve()))
 fn = r"/home/hipo/Downloads/ep03.m4a"
 result = model.transcribe(fn)
 with open(rf"{fn}.txt", mode="w", encoding="utf-8") as f:
-    f.write("，".join([converter.convert(segment["text"]) for segment in result["segments"]]))
+    f.write(
+        "，".join(
+            [converter.convert(segment["text"]) for segment in result["segments"]]
+        )
+    )

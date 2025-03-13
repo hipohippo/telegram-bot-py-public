@@ -17,7 +17,9 @@ def build_bot_app(bot_config_dict) -> Application:
         BotBuilder(bot_config_dict["bot_token"], bot_config)
         .add_handlers(
             [
-                MessageHandler((filters.TEXT | filters.PHOTO) & ~filters.COMMAND, post_to_mastodon),
+                MessageHandler(
+                    (filters.TEXT | filters.PHOTO) & ~filters.COMMAND, post_to_mastodon
+                ),
             ]
         )
         .build()

@@ -3,7 +3,11 @@ import pytest
 
 from njtransit.query.bus_and_stop import NJTBusStop
 from njtransit.query.bus_api import next_bus_job
-from njtransit.query.path import html_format_path_status_output, get_train_status, PathStation
+from njtransit.query.path import (
+    html_format_path_status_output,
+    get_train_status,
+    PathStation,
+)
 
 
 class TestNJTBot:
@@ -11,7 +15,9 @@ class TestNJTBot:
         station_query = "hoboken"
         station_map = PathStation.get_station_map()
         current_station = station_map.get(station_query)
-        path_train_status = html_format_path_status_output(current_station, get_train_status(current_station))
+        path_train_status = html_format_path_status_output(
+            current_station, get_train_status(current_station)
+        )
         print(path_train_status)
 
     @pytest.mark.asyncio

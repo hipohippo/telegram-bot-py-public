@@ -9,7 +9,9 @@ from bot_common.bot_factory import BotBuilder
 from bots.paywall_bot.bot_handler import unified_command_handler
 from bots.paywall_bot.paywall_bot_config import PaywallBotConfig
 
-logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO)
+logging.basicConfig(
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
+)
 logger = logging.getLogger(__name__)
 
 
@@ -28,7 +30,10 @@ def build_bot_app(bot_config_dict) -> Application:
 
 
 if __name__ == "__main__":
-    logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO)
+    logging.basicConfig(
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        level=logging.INFO,
+    )
     bot_config_dict = parse_from_ini(sys.argv[1])
     bot_app = build_bot_app(bot_config_dict)
     bot_app.run_polling()

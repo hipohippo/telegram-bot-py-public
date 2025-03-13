@@ -8,12 +8,16 @@ from telegram.ext import ContextTypes
 from bot_common.common_handler import heart_beat_job
 
 
-async def send_message_with_retry(context: ContextTypes.DEFAULT_TYPE, chat_id: int, html_text: str):
+async def send_message_with_retry(
+    context: ContextTypes.DEFAULT_TYPE, chat_id: int, html_text: str
+):
     i = 1
     MAX_ATTEMPTS = 2
     while i <= MAX_ATTEMPTS:
         try:
-            await context.bot.send_message(chat_id=chat_id, text=html_text, parse_mode="HTML")
+            await context.bot.send_message(
+                chat_id=chat_id, text=html_text, parse_mode="HTML"
+            )
             return
         except Exception:
             await heart_beat_job(context)
@@ -26,7 +30,9 @@ async def channel_publisher_job(context: ContextTypes.DEFAULT_TYPE):
     telegraph_urls = context.job.data["telegraph_urls"]
     title = context.job.data["title"]
     original_url = context.job.data["original_url"]
-    await channel_publisher_function(context, target_chat_id, telegraph_urls, original_url, title)
+    await channel_publisher_function(
+        context, target_chat_id, telegraph_urls, original_url, title
+    )
 
 
 async def post_scraped_urls_to_chat(
@@ -43,7 +49,9 @@ async def post_scraped_urls_to_chat(
 
     # compose html message and publish to designated channel
     if update.message.chat_id != error_notify_chat:
-        await schedule_delay_publisher_job(context, telegraph_urls, original_url, title, delay_publish_max_minute)
+        await schedule_delay_publisher_job(
+            context, telegraph_urls, original_url, title, delay_publish_max_minute
+        )
 
 
 async def schedule_delay_publisher_job(
@@ -57,7 +65,11 @@ async def schedule_delay_publisher_job(
     logging.info(f"delayed by {delay_minutes}/{delay_publish_max_minute}")
     context.application.job_queue.run_once(
         channel_publisher_job,
-        data={"telegraph_urls": telegraph_urls, "original_url": original_url, "title": title},
+        data={
+            "telegraph_urls": telegraph_urls,
+            "original_url": original_url,
+            "title": title,
+        },
         when=delay_minutes * 60,
         job_kwargs={"misfire_grace_time": 5},  ## per APScheduler
     )
@@ -74,7 +86,11 @@ async def channel_publisher_function(
     title: str,
 ):
     for idx, telegraph_url in enumerate(telegraph_urls):
-        numbering = f"({(idx + 1)}/{len(telegraph_urls)})" if (len(telegraph_urls)) >= 2 else ""
+        numbering = (
+            f"({(idx + 1)}/{len(telegraph_urls)})" if (len(telegraph_urls)) >= 2 else ""
+        )
         message_for_channel = f'<a href="{telegraph_url}"> {title + numbering} </a> | <a href="{original_url}">原文</a>'
-        await send_message_with_retry(context, chat_id=target_chat_id, html_text=message_for_channel)
+        await send_message_with_retry(
+            context, chat_id=target_chat_id, html_text=message_for_channel
+        )
     logging.getLogger(__name__).info(f"Publishing of {telegraph_urls[0]} is completed")

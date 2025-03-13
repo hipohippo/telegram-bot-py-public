@@ -41,10 +41,15 @@ def build_bot_app(bot_config_dict) -> Application:
 
 
 if __name__ == "__main__":
-    logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO)
+    logging.basicConfig(
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        level=logging.INFO,
+    )
     bot_config_file = sys.argv[1]
     bot_config_dict = section_proxy_to_dict(parse_from_ini(bot_config_file))
-    bot_config_dict.update({"exec_script": parse_from_ini(bot_config_file, section="exec_script")})
+    bot_config_dict.update(
+        {"exec_script": parse_from_ini(bot_config_file, section="exec_script")}
+    )
     bot_app = build_bot_app(bot_config_dict)
     bot_app.bot_data["exec_pid"] = dict()
     bot_app.run_polling()

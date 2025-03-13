@@ -15,7 +15,12 @@ def build_keyboard_markup(keyboard_layout: List[List[Button]]) -> InlineKeyboard
     keyboard: List[List[InlineKeyboardButton]] = []
     for level in keyboard_layout:
         keyboard.append(
-            [InlineKeyboardButton(button.display_name, callback_data=button.callback_query_data) for button in level]
+            [
+                InlineKeyboardButton(
+                    button.display_name, callback_data=button.callback_query_data
+                )
+                for button in level
+            ]
         )
     keyboard_markup = InlineKeyboardMarkup(keyboard)
     return keyboard_markup

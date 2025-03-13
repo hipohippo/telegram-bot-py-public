@@ -4,7 +4,11 @@ from telegram import Update
 from telegram.ext import ContextTypes
 
 from bots.mta_bot.mta_bot_config import MTASubwayBotConfig
-from public_transit.nyc_mta.query.feed_query import query_stop_and_route, RouteGroup, query_all_stations_for_route
+from public_transit.nyc_mta.query.feed_query import (
+    query_stop_and_route,
+    RouteGroup,
+    query_all_stations_for_route,
+)
 from public_transit.nyc_mta.query.format import format_html
 from public_transit.nyc_mta.query.util import filter_by_time
 
@@ -40,7 +44,9 @@ async def next_train_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
         list(
             itertools.chain(
                 *[
-                    query_stop_and_route(stop_parent_id, direction, route_group, bot_config.api_key)
+                    query_stop_and_route(
+                        stop_parent_id, direction, route_group, bot_config.api_key
+                    )
                     for route_group in RouteGroup
                 ]
             )
@@ -49,7 +55,9 @@ async def next_train_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
     )
     stop_arrivals = filter_by_time(stop_arrivals, bot_config.minute_departure_cap)
     stop_name = bot_config.stop_id_name_map[stop_parent_id]
-    await update.message.reply_text(text=format_html(stop_name, direction, stop_arrivals), parse_mode="HTML")
+    await update.message.reply_text(
+        text=format_html(stop_name, direction, stop_arrivals), parse_mode="HTML"
+    )
 
 
 async def show_stop_id_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -74,7 +82,9 @@ async def show_stop_id_handler(update: Update, context: ContextTypes.DEFAULT_TYP
         route = update.message.text[1].upper()
 
     stops = query_all_stations_for_route(route, bot_config.stop_info_df)
-    msg = "\n".join([f"{stop['stop_name']} = {stop['stop_id']}" for idx, stop in stops.iterrows()])
+    msg = "\n".join(
+        [f"{stop['stop_name']} = {stop['stop_id']}" for idx, stop in stops.iterrows()]
+    )
     if msg != "":
         await update.message.reply_text(msg, parse_mode="HTML")
 
@@ -93,10 +103,12 @@ async def search_stop_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
     if (not update) or (not update.message) or (not update.message.text):
         return
     keyword = update.message.text[2:].lower()
-    stops = bot_config.stop_info_df[bot_config.stop_info_df["stop_name"].str.lower().str.find(keyword) >= 0][
-        ["stop_name", "stop_id"]
-    ]
-    msg = "\n".join([f"{stop['stop_name']} = {stop['stop_id']}" for idx, stop in stops.iterrows()])
+    stops = bot_config.stop_info_df[
+        bot_config.stop_info_df["stop_name"].str.lower().str.find(keyword) >= 0
+    ][["stop_name", "stop_id"]]
+    msg = "\n".join(
+        [f"{stop['stop_name']} = {stop['stop_id']}" for idx, stop in stops.iterrows()]
+    )
     if len(msg) > 0:
         await update.message.reply_text(msg, parse_mode="HTML")
     else:

@@ -20,7 +20,11 @@ class MTASubwayBotConfig(BotConfig):
         self.api_key: str = bot_config_dict["api_key"]
 
         stop_info_df: pd.DataFrame = load_stop_info()
-        stop_info_df = stop_info_df[pd.isnull(stop_info_df["parent_station"])][["stop_id", "stop_name"]]
+        stop_info_df = stop_info_df[pd.isnull(stop_info_df["parent_station"])][
+            ["stop_id", "stop_name"]
+        ]
         stop_info_df["route"] = [x[0] for x in stop_info_df["stop_id"]]
         self.stop_info_df = stop_info_df
-        self.stop_id_name_map = {row["stop_id"]: row["stop_name"] for idx, row in stop_info_df.iterrows()}
+        self.stop_id_name_map = {
+            row["stop_id"]: row["stop_name"] for idx, row in stop_info_df.iterrows()
+        }

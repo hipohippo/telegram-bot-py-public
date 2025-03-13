@@ -28,7 +28,7 @@ async def download_image(session: aiohttp.ClientSession, url: str) -> str:
     return ""
 
 
-async def  compose_reply_message(item: NeoDBItem) -> InputMediaPhoto:
+async def compose_reply_message(item: NeoDBItem) -> InputMediaPhoto:
     async with aiohttp.ClientSession() as session:
         # Download the cover image
         image_path = await download_image(session, item.cover_image_url)
@@ -137,11 +137,7 @@ async def handle_action_choice(
             f"You've chosen to {action} on {context.user_data['selected_item'].title}. "
             "Please enter any additional text or skip:",
             reply_markup=InlineKeyboardMarkup(
-                [
-                    [
-                        InlineKeyboardButton("SKIP", callback_data="skip")
-                    ]
-                ]
+                [[InlineKeyboardButton("SKIP", callback_data="skip")]]
             ),
         )
         return ACTION_INPUT

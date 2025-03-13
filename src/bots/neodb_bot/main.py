@@ -23,7 +23,8 @@ def build_bot_app(bot_config_dict) -> Application:
         #      MessageHandler(filters.Regex(r"^[Mm] .+"), mark_progress_handler),
         #  ]
         # )  # handlers will be applied in the order defined...if accepted by one handler, it will stop processing more rules
-        .add_handlers([get_conversation_handler()]).build()
+        .add_handlers([get_conversation_handler()])
+        .build()
     )
     return bot_app
 
