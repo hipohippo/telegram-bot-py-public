@@ -1,12 +1,8 @@
-import asyncio
 import logging
 import time
-import traceback
 from typing import List
 
 import pandas as pd
-from telegram import Update
-from telegram.ext import ContextTypes
 from telegraph import Telegraph
 
 
@@ -88,27 +84,15 @@ def publish_chunk_telegraph(
 
 
 async def publish_chunk_to_telegraph(
-    update: Update,
-    context: ContextTypes.DEFAULT_TYPE,
     telegraph_publisher: Telegraph,
     title: str,
     author: str,
     html_element_list: List[str],
-    error_notify_chat: int,
 ):
-    try:
-        logging.getLogger(__name__).info(
-            f"total html length {sum([len(s) for s in html_element_list])}"
-        )
-        telegraph_urls: List[str] = publish_chunk_telegraph(
-            telegraph_publisher, title, author, html_element_list
-        )
-        return telegraph_urls
-    except Exception:
-        error_message = (
-            f"failed in chat {update.effective_chat.id}: {traceback.format_exc()}"
-        )
-        logging.getLogger(__name__).error(error_message)
-        await context.bot.send_message(error_notify_chat, text=error_message)
-        await asyncio.sleep(5)
-    return []
+    logging.getLogger(__name__).info(
+        f"total html length {sum([len(s) for s in html_element_list])}"
+    )
+    telegraph_urls: List[str] = publish_chunk_telegraph(
+        telegraph_publisher, title, author, html_element_list
+    )
+    return telegraph_urls
