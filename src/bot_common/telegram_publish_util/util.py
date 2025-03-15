@@ -24,13 +24,13 @@ async def send_message_with_retry(
             i += 1
 
 
-async def channel_publisher_job(context: ContextTypes.DEFAULT_TYPE):
+async def channel_post_job(context: ContextTypes.DEFAULT_TYPE):
     bot_config = context.bot_data["bot_config"]
     target_chat_id = bot_config.publish_channel_id
     telegraph_urls = context.job.data["telegraph_urls"]
     title = context.job.data["title"]
     original_url = context.job.data["original_url"]
-    await channel_publisher_function(
+    await channel_post_function(
         context, target_chat_id, telegraph_urls, original_url, title
     )
 
@@ -49,12 +49,12 @@ async def post_scraped_urls_to_chat(
 
     # compose html message and publish to designated channel
     if update.message.chat_id != error_notify_chat:
-        await schedule_delay_publisher_job(
+        await schedule_delay_post_job(
             context, telegraph_urls, original_url, title, delay_publish_max_minute
         )
 
 
-async def schedule_delay_publisher_job(
+async def schedule_delay_post_job(
     context: ContextTypes.DEFAULT_TYPE,
     telegraph_urls: List[str],
     original_url: str,
@@ -64,7 +64,7 @@ async def schedule_delay_publisher_job(
     delay_minutes = int(np.random.uniform(0, delay_publish_max_minute, 1)[0])
     logging.info(f"delayed by {delay_minutes}/{delay_publish_max_minute}")
     context.application.job_queue.run_once(
-        channel_publisher_job,
+        channel_post_job,
         data={
             "telegraph_urls": telegraph_urls,
             "original_url": original_url,
@@ -78,7 +78,7 @@ async def schedule_delay_publisher_job(
     )
 
 
-async def channel_publisher_function(
+async def channel_post_function(
     context: ContextTypes.DEFAULT_TYPE,
     target_chat_id: int,
     telegraph_urls: List[str],

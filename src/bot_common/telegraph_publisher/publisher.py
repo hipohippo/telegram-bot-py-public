@@ -56,7 +56,7 @@ def chop_str_group(str_list: List[str], chunk_size: int) -> List[int]:
     return cutoff_index
 
 
-def publish_chunk_telegraph(
+def publish_chunk_to_telegraph(
     telegraph_publisher: Telegraph,
     title: str,
     author: str,
@@ -81,18 +81,3 @@ def publish_chunk_telegraph(
         if idx != len(cutoff_index) - 2:
             time.sleep(10)
     return url_list
-
-
-async def publish_chunk_to_telegraph(
-    telegraph_publisher: Telegraph,
-    title: str,
-    author: str,
-    html_element_list: List[str],
-):
-    logging.getLogger(__name__).info(
-        f"total html length {sum([len(s) for s in html_element_list])}"
-    )
-    telegraph_urls: List[str] = publish_chunk_telegraph(
-        telegraph_publisher, title, author, html_element_list
-    )
-    return telegraph_urls
