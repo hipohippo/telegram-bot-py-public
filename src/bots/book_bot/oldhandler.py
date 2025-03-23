@@ -1,3 +1,4 @@
+import subprocess
 from pathlib import Path
 from typing import List
 
@@ -8,6 +9,19 @@ from bot_common.common_handler import send_file
 from bot_common.util import restricted
 from bots.book_bot.book_bot_config import BookBotConfig
 from bots.book_bot.book_db import search_book_df
+
+
+async def send_to_boox_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    bot_config: BookBotConfig = context.bot_data["bot_config"]
+    if context.chat_data["status"] != "REPLIED":
+        await reply_book_handler(update, context)
+    resp = subprocess.run(
+        "curl -F 'file=@bdf.xlsx' http://192.168.1.100:8080/upload",
+        shell=True,
+        capture_output=True,
+        text=True,
+    )
+    await update.message.reply_text(resp.stdout)
 
 
 @restricted

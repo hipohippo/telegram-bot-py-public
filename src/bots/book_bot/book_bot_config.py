@@ -13,7 +13,7 @@ class BookBotConfig(BotConfig):
             int(bot_config_dict["heart_beat_chat"]),
             int(bot_config_dict["error_notify_chat"]),
             white_list_id=format_white_list(bot_config_dict["white_list"]),
-            bot_name="Book Finder Bot",
+            bot_name="Hipo Book Bot",
         )
         self.book_path: Path = Path(bot_config_dict["book_folder_path"])
         self.recache()

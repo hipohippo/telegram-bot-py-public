@@ -3,12 +3,12 @@ import sys
 from configparser import SectionProxy
 from typing import Union
 
-from telegram.ext import Application, filters, MessageHandler, CommandHandler
+from telegram.ext import Application
 
 from bot_common.bot_config.bot_config_parser import parse_from_ini
 from bot_common.bot_factory import BotBuilder
 from bots.book_bot.book_bot_config import BookBotConfig
-from bots.book_bot.bot_handler import general_handler, recache_handler, all_book_handler
+from bots.book_bot.handler import book_conv_handler
 
 
 def build_bot_app(bot_config_dict: Union[dict, SectionProxy]) -> Application:
@@ -17,17 +17,7 @@ def build_bot_app(bot_config_dict: Union[dict, SectionProxy]) -> Application:
         BotBuilder(bot_config_dict["bot_token"], bot_config)
         .add_handlers(
             [
-                CommandHandler("recache", recache_handler),
-            ]
-        )
-        .add_handlers(
-            [
-                CommandHandler("allbook", all_book_handler),
-            ]
-        )
-        .add_handlers(
-            [
-                MessageHandler(filters.TEXT, general_handler),
+                book_conv_handler,
             ]
         )
         .build()
