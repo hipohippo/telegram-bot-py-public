@@ -7,7 +7,11 @@ from telegraph import Telegraph
 
 
 def publish_single(
-    telegraph_publisher: Telegraph, title: str, author: str, html_content: str
+    telegraph_publisher: Telegraph,
+    title: str,
+    author: str,
+    author_url: str,
+    html_content: str,
 ) -> str:
     attempt = 1
     MAX_ATTEMPT = 2
@@ -17,6 +21,7 @@ def publish_single(
             response = telegraph_publisher.create_page(
                 title=title,
                 author_name=author,
+                author_url=author_url,
                 html_content=html_content,
             )
             url = response["url"]
@@ -60,6 +65,7 @@ def publish_chunk_to_telegraph(
     telegraph_publisher: Telegraph,
     title: str,
     author: str,
+    author_url: str,
     html_content_group: List[str],
 ) -> List[str]:
     cutoff_index = chop_str_group(html_content_group, chunk_size=20000)
@@ -75,6 +81,7 @@ def publish_chunk_to_telegraph(
                 if (len(cutoff_index) >= 3)
                 else title,
                 author,
+                author_url,
                 "".join(html_content_group[cutoff_index[idx] : cutoff_index[idx + 1]]),
             )
         )
