@@ -6,9 +6,12 @@ import pandas as pd
 
 def init_df(working_dir: Path):
     sub_files = list(working_dir.rglob("*"))
-    names = [x.stem for x in sub_files if not x.is_dir()]
-    books = [x for x in sub_files if not x.is_dir()]
-    df = pd.DataFrame({"name": names, "fullpath": books})  # schema
+    book_names = [x.stem for x in sub_files if not x.is_dir()]
+    book_full_paths = [x for x in sub_files if not x.is_dir()]
+    book_categories = [x.relative_to(working_dir).parts[0] for x in book_full_paths]
+    df = pd.DataFrame(
+        {"name": book_names, "fullpath": book_full_paths, "category": book_categories}
+    )  # schema
     return df
 
 

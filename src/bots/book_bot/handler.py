@@ -26,6 +26,29 @@ async def help_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     """)
 
 
+async def random_book_handler(
+    update: Update, context: ContextTypes.DEFAULT_TYPE
+) -> None:
+    """Send a random book to the user."""
+    RANDOM_BOOKS = 10
+    category = context.args[0] if context.args else None
+    book_df = context.bot_data["bot_config"].book_df
+    if category:
+        random_books: list[Path] = (
+            book_df[book_df["category"] == category]
+            .sample(RANDOM_BOOKS)["fullpath"]
+            .tolist()
+        )
+    else:
+        random_books: list[Path] = book_df.sample(RANDOM_BOOKS)["fullpath"].tolist()
+    await update.message.reply_text(
+        f"Here are {RANDOM_BOOKS} random books:\n"
+        + "\n".join(f"{i + 1}. {book.name}" for i, book in enumerate(random_books))
+    )
+    context.user_data["search_results"] = random_books
+    return SELECT_ACTION
+
+
 # Define states
 SEARCH, SELECT_ACTION, READY_TO_DELIVER = range(3)
 
@@ -181,7 +204,10 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 # Create the conversation handler
 book_conv_handler = ConversationHandler(
-    entry_points=[CommandHandler(["search", "s"], start_search)],
+    entry_points=[
+        CommandHandler(["search", "s"], start_search),
+        CommandHandler(["random", "r"], random_book_handler),
+    ],
     states={
         SEARCH: [MessageHandler(filters.TEXT & ~filters.COMMAND, search_books)],
         SELECT_ACTION: [
