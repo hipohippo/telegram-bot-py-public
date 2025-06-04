@@ -5,10 +5,10 @@ import numpy as np
 from bs4 import BeautifulSoup
 from nodriver.core.browser import Browser
 from nodriver.core.tab import Tab
-from telegram import Update, Message
+from telegram import Message, Update
 from telegram.ext import ContextTypes
 
-from bot_common.html_util.html_parse import paragraphs_to_html, extract_text_from_soup
+from bot_common.html_util.html_parse import extract_text_from_soup, paragraphs_to_html
 from bot_common.telegraph_publisher.publisher import publish_single
 from bot_common.util import parse_command_and_argument
 from bots.paywall_bot.paywall_bot_config import PaywallBotConfig
