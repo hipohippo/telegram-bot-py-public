@@ -1,6 +1,8 @@
+import logging
 from pathlib import Path
 from typing import List
 
+import requests
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update
 from telegram.ext import (
     CommandHandler,
@@ -12,7 +14,17 @@ from telegram.ext import (
 
 from bot_common.common_handler import send_file
 from bot_common.util import restricted
+from bots.book_bot.book_bot_config import BookBotConfig
 from bots.book_bot.book_db import search_book_df
+
+
+async def help_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Send a message when the command /help is issued."""
+    await update.message.reply_text("""
+    Use /search <keywords> to search for a book or /s <keywords> to search for a book.
+    Use /cancel to cancel the current search.
+    """)
+
 
 # Define states
 SEARCH, SELECT_ACTION, READY_TO_DELIVER = range(3)
@@ -21,14 +33,25 @@ SEARCH, SELECT_ACTION, READY_TO_DELIVER = range(3)
 @restricted
 async def start_search(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Start the conversation and ask user for input."""
-    await update.message.reply_text("Please enter keywords to search for a book:")
-    return SEARCH
+    if not context.args:
+        await update.message.reply_text("Please enter keywords to search for a book:")
+        context.user_data["search_method"] = "reply"
+        return SEARCH
+    else:
+        # Join arguments into search keywords
+        context.user_data["search_keywords"] = " ".join(context.args)
+        context.user_data["search_method"] = "command"
+        return await search_books(update, context)
 
 
 @restricted
 async def search_books(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Search for books based on keywords and show results."""
-    keywords = update.message.text
+    keywords = (
+        context.user_data["search_keywords"]
+        if context.user_data["search_method"] == "command"
+        else update.message.text
+    )
     book_files: List[Path] = search_book_df(
         keywords, context.bot_data["bot_config"].book_df
     )
@@ -79,7 +102,7 @@ async def handle_selection(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         await update.message.reply_text(
             "How would you like to receive the book?",
             reply_markup=ReplyKeyboardMarkup(
-                [["Send to chat", "Send to LAN"]], one_time_keyboard=True
+                [["Send to chat", "Send to Boox"]], one_time_keyboard=True
             ),
         )
         return READY_TO_DELIVER
@@ -90,16 +113,47 @@ async def handle_selection(update: Update, context: ContextTypes.DEFAULT_TYPE) -
 
 
 @restricted
+async def send_to_boox_handler(
+    update: Update, context: ContextTypes.DEFAULT_TYPE, selected_book: Path
+) -> None:
+    """Send the selected book to Boox."""
+    bot_config: BookBotConfig = context.bot_data["bot_config"]
+    try:
+        with open(selected_book, "rb") as f:
+            filename = selected_book.name
+            # Check for ISBN pattern at start (13 or 10 digits followed by underscore)
+            if len(filename) > 14 and filename[:13].isdigit() and filename[13] == "_":
+                # Move 13 digit ISBN to end
+                filename = filename[14:] + "_" + filename[:13]
+            elif len(filename) > 11 and filename[:10].isdigit() and filename[10] == "_":
+                # Move 10 digit ISBN to end
+                filename = filename[11:] + "_" + filename[:10]
+            files = {"file": (filename, f)}
+
+            response = requests.post(bot_config.boox_url, files=files)
+            logging.getLogger(__name__).info(
+                f"Status Code: {response.status_code}, Response: {response.text}"
+            )
+        await update.message.reply_text(response.text)
+    except Exception as e:
+        logging.getLogger(__name__).error(f"Error sending to Boox: {e}")
+        await update.message.reply_text(
+            "Error sending to Boox", reply_markup=ReplyKeyboardRemove()
+        )
+        return ConversationHandler.END
+
+
+@restricted
 async def handle_delivery(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Handle the delivery method for the selected book."""
     choice = update.message.text
     selected_book: Path = context.user_data["selected_book"]
 
-    if choice not in ["Send to chat", "Send to LAN"]:
+    if choice not in ["Send to chat", "Send to Boox"]:
         await update.message.reply_text(
             "Please select a valid option.",
             reply_markup=ReplyKeyboardMarkup(
-                [["Send to chat", "Send to LAN"]], one_time_keyboard=True
+                [["Send to chat", "Send to Boox"]], one_time_keyboard=True
             ),
         )
         return READY_TO_DELIVER
@@ -107,10 +161,9 @@ async def handle_delivery(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     if choice == "Send to chat":
         # Send the file directly in chat
         await send_file(selected_book, update, context)
-    else:  # Send to LAN
-        # Use subprocess to send to local network. TODO: Fix this
-        await update.message.reply_text("Sending to LAN...")
-        # await send_file(selected_book, update, context)
+    else:  # Send to Boox
+        await update.message.reply_text("Sending to Boox...")
+        await send_to_boox_handler(update, context, selected_book)
     await update.message.reply_text(
         "Done! You can start a new search anytime.", reply_markup=ReplyKeyboardRemove()
     )
@@ -128,7 +181,7 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 # Create the conversation handler
 book_conv_handler = ConversationHandler(
-    entry_points=[CommandHandler("search", start_search)],
+    entry_points=[CommandHandler(["search", "s"], start_search)],
     states={
         SEARCH: [MessageHandler(filters.TEXT & ~filters.COMMAND, search_books)],
         SELECT_ACTION: [

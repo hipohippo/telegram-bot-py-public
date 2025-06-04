@@ -16,6 +16,7 @@ class BookBotConfig(BotConfig):
             bot_name="Hipo Book Bot",
         )
         self.book_path: Path = Path(bot_config_dict["book_folder_path"])
+        self.boox_url: str = bot_config_dict["boox_url"]
         self.recache()
 
     def recache(self):
