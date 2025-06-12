@@ -8,7 +8,7 @@ from telegram.ext import Application, CommandHandler
 from bot_common.bot_config.bot_config_parser import parse_from_ini
 from bot_common.bot_factory import BotBuilder
 from bots.book_bot.book_bot_config import BookBotConfig
-from bots.book_bot.handler import book_conv_handler, help_handler
+from bots.book_bot.handler import book_conv_handler, help_handler, recache_handler
 
 
 def build_bot_app(bot_config_dict: Union[dict, SectionProxy]) -> Application:
@@ -18,6 +18,7 @@ def build_bot_app(bot_config_dict: Union[dict, SectionProxy]) -> Application:
         .add_handlers(
             [
                 CommandHandler("help", help_handler),
+                CommandHandler("recache", recache_handler),
                 book_conv_handler,
             ]
         )

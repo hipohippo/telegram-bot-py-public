@@ -18,6 +18,12 @@ from bots.book_bot.book_bot_config import BookBotConfig
 from bots.book_bot.book_db import search_book_df
 
 
+async def recache_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Recache the book database."""
+    context.bot_data["bot_config"].recache()
+    await update.message.reply_text("Book database recached.")
+
+
 async def help_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Send a message when the command /help is issued."""
     await update.message.reply_text("""
