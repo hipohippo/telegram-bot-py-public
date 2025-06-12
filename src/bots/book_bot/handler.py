@@ -217,7 +217,8 @@ book_conv_handler = ConversationHandler(
     states={
         SEARCH: [MessageHandler(filters.TEXT & ~filters.COMMAND, search_books)],
         SELECT_ACTION: [
-            MessageHandler(filters.TEXT & ~filters.COMMAND, handle_selection)
+            MessageHandler(filters.TEXT & ~filters.COMMAND, handle_selection),
+            CommandHandler(["search", "s"], start_search),
         ],
         READY_TO_DELIVER: [
             MessageHandler(filters.TEXT & ~filters.COMMAND, handle_delivery)
