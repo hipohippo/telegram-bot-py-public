@@ -25,8 +25,7 @@ async def send_message_with_retry(
 
 
 async def channel_post_job(context: ContextTypes.DEFAULT_TYPE):
-    bot_config = context.bot_data["bot_config"]
-    target_chat_id = bot_config.publish_channel_id
+    target_chat_id = context.job.data["publish_channel_id"]
     telegraph_urls = context.job.data["telegraph_urls"]
     title = context.job.data["title"]
     original_url = context.job.data["original_url"]
@@ -42,23 +41,30 @@ async def post_scraped_urls_to_chat(
     original_url: str,
     title: str,
     error_notify_chat: int,
+    publish_channel_id: int | str,
     delay_publish_max_minute: int,
 ):
     # reply orignal message with URL
     await update.message.reply_html("\n".join(telegraph_urls))
 
     # compose html message and publish to designated channel
-    if update.message.chat_id != error_notify_chat:
-        await schedule_delay_post_job(
-            context, telegraph_urls, original_url, title, delay_publish_max_minute
+    if update.message.chat_id != error_notify_chat and publish_channel_id:
+        await schedule_delay_post_channel_job(
+            context,
+            telegraph_urls,
+            original_url,
+            title,
+            publish_channel_id,
+            delay_publish_max_minute,
         )
 
 
-async def schedule_delay_post_job(
+async def schedule_delay_post_channel_job(
     context: ContextTypes.DEFAULT_TYPE,
     telegraph_urls: List[str],
     original_url: str,
     title: str,
+    publish_channel_id: int | str,
     delay_publish_max_minute: int,
 ):
     delay_minutes = int(np.random.uniform(0, delay_publish_max_minute, 1)[0])
@@ -69,6 +75,7 @@ async def schedule_delay_post_job(
             "telegraph_urls": telegraph_urls,
             "original_url": original_url,
             "title": title,
+            "publish_channel_id": publish_channel_id,
         },
         when=delay_minutes * 60,
         job_kwargs={"misfire_grace_time": 5},  ## per APScheduler
@@ -80,7 +87,7 @@ async def schedule_delay_post_job(
 
 async def channel_post_function(
     context: ContextTypes.DEFAULT_TYPE,
-    target_chat_id: int,
+    target_chat_id: int | str,
     telegraph_urls: List[str],
     original_url: str,
     title: str,
