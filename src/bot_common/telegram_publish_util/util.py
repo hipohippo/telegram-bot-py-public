@@ -81,7 +81,7 @@ async def schedule_delay_post_channel_job(
         job_kwargs={"misfire_grace_time": 5},  ## per APScheduler
     )
     logging.getLogger(__name__).info(
-        f"Publishing of {telegraph_urls[0]} is scheduled to run after {delay_minutes} minutes"
+        f"Publishing of {telegraph_urls} is scheduled to run after {delay_minutes} minutes"
     )
 
 
@@ -100,4 +100,4 @@ async def channel_post_function(
         await send_message_with_retry(
             context, chat_id=target_chat_id, html_text=message_for_channel
         )
-    logging.getLogger(__name__).info(f"Publishing of {telegraph_urls[0]} is completed")
+        logging.getLogger(__name__).info(f"Publishing of {telegraph_url} is completed")
